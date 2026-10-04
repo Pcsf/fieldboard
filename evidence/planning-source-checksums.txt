@@ -1,0 +1,2 @@
+11279df4e2731eceaa7bc1d4d9f4b1c249ac87bbe2e00c6801a9f3c9602e7b92  FPGA-FW-Effort-Estimation-Model.md
+4e973dd9ba748a753d0eb894155a12debbb48ae34ae23a9f493eda2043a900af  FPGA-Project-Effort-Estimation-Top-Level.md

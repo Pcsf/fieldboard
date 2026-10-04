@@ -1,0 +1,147 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/model.test.ts:
+1 | // Test-first API scaffold. No behavior implemented yet.
+2 | export type Filters = { q:string; label:string; assignee:string; priority:string; due:string; project:string };
+3 | export const createWorkspace = (..._args:any[]):any => { throw new Error("Not implemented"); };
+                                                                                              ^
+error: Not implemented
+      at createWorkspace (/workspace/src/model.ts:3:91)
+      at fixture (/workspace/tests/model.test.ts:6:13)
+      at <anonymous> (/workspace/tests/model.test.ts:13:26)
+(fail) project: creates board with the five ordered default columns [0.27ms]
+1 | // Test-first API scaffold. No behavior implemented yet.
+2 | export type Filters = { q:string; label:string; assignee:string; priority:string; due:string; project:string };
+3 | export const createWorkspace = (..._args:any[]):any => { throw new Error("Not implemented"); };
+                                                                                              ^
+error: Not implemented
+      at createWorkspace (/workspace/src/model.ts:3:91)
+      at fixture (/workspace/tests/model.test.ts:6:13)
+      at <anonymous> (/workspace/tests/model.test.ts:21:30)
+(fail) columns: add, rename, reorder and delete only with explicit destination [0.08ms]
+1 | // Test-first API scaffold. No behavior implemented yet.
+2 | export type Filters = { q:string; label:string; assignee:string; priority:string; due:string; project:string };
+3 | export const createWorkspace = (..._args:any[]):any => { throw new Error("Not implemented"); };
+                                                                                              ^
+error: Not implemented
+      at createWorkspace (/workspace/src/model.ts:3:91)
+      at fixture (/workspace/tests/model.test.ts:6:13)
+      at <anonymous> (/workspace/tests/model.test.ts:35:30)
+(fail) lifecycle: every create, edit, move, archive, restore and delete appends activity [0.09ms]
+1 | // Test-first API scaffold. No behavior implemented yet.
+2 | export type Filters = { q:string; label:string; assignee:string; priority:string; due:string; project:string };
+3 | export const createWorkspace = (..._args:any[]):any => { throw new Error("Not implemented"); };
+                                                                                              ^
+error: Not implemented
+      at createWorkspace (/workspace/src/model.ts:3:91)
+      at fixture (/workspace/tests/model.test.ts:6:13)
+      at <anonymous> (/workspace/tests/model.test.ts:52:30)
+(fail) completion: entering, leaving and changing done flags maintains timestamps [0.04ms]
+1 | // Test-first API scaffold. No behavior implemented yet.
+2 | export type Filters = { q:string; label:string; assignee:string; priority:string; due:string; project:string };
+3 | export const createWorkspace = (..._args:any[]):any => { throw new Error("Not implemented"); };
+                                                                                              ^
+error: Not implemented
+      at createWorkspace (/workspace/src/model.ts:3:91)
+      at fixture (/workspace/tests/model.test.ts:6:13)
+      at <anonymous> (/workspace/tests/model.test.ts:66:30)
+(fail) order: top, bottom, within-column and cross-column moves keep unique contiguous positions [0.06ms]
+1 | // Test-first API scaffold. No behavior implemented yet.
+2 | export type Filters = { q:string; label:string; assignee:string; priority:string; due:string; project:string };
+3 | export const createWorkspace = (..._args:any[]):any => { throw new Error("Not implemented"); };
+                                                                                              ^
+error: Not implemented
+      at createWorkspace (/workspace/src/model.ts:3:91)
+      at fixture (/workspace/tests/model.test.ts:6:13)
+      at <anonymous> (/workspace/tests/model.test.ts:78:30)
+(fail) undo: restores edits, moves and deletes while preserving append-only audit [0.08ms]
+1 | // Test-first API scaffold. No behavior implemented yet.
+2 | export type Filters = { q:string; label:string; assignee:string; priority:string; due:string; project:string };
+3 | export const createWorkspace = (..._args:any[]):any => { throw new Error("Not implemented"); };
+                                                                                              ^
+error: Not implemented
+      at createWorkspace (/workspace/src/model.ts:3:91)
+      at fixture (/workspace/tests/model.test.ts:6:13)
+      at <anonymous> (/workspace/tests/model.test.ts:92:27)
+(fail) filters: AND semantics, description search, due states and fragment roundtrip [0.08ms]
+1 | // Test-first API scaffold. No behavior implemented yet.
+2 | export type Filters = { q:string; label:string; assignee:string; priority:string; due:string; project:string };
+3 | export const createWorkspace = (..._args:any[]):any => { throw new Error("Not implemented"); };
+                                                                                              ^
+error: Not implemented
+      at createWorkspace (/workspace/src/model.ts:3:91)
+      at fixture (/workspace/tests/model.test.ts:6:13)
+      at <anonymous> (/workspace/tests/model.test.ts:106:26)
+(fail) backup > lossless roundtrip includes all entities and activity [0.03ms]
+1 | // Test-first API scaffold. No behavior implemented yet.
+2 | export type Filters = { q:string; label:string; assignee:string; priority:string; due:string; project:string };
+3 | export const createWorkspace = (..._args:any[]):any => { throw new Error("Not implemented"); };
+                                                                                              ^
+error: Not implemented
+      at createWorkspace (/workspace/src/model.ts:3:91)
+      at fixture (/workspace/tests/model.test.ts:6:13)
+      at <anonymous> (/workspace/tests/model.test.ts:111:26)
+(fail) backup > rejects invalid fields, relationships, duplicate IDs, dates, schema and future versions [0.05ms]
+1 | // Test-first API scaffold. No behavior implemented yet.
+2 | export type Filters = { q:string; label:string; assignee:string; priority:string; due:string; project:string };
+3 | export const createWorkspace = (..._args:any[]):any => { throw new Error("Not implemented"); };
+                                                                                              ^
+error: Not implemented
+      at createWorkspace (/workspace/src/model.ts:3:91)
+      at fixture (/workspace/tests/model.test.ts:6:13)
+      at <anonymous> (/workspace/tests/model.test.ts:116:26)
+(fail) backup > migration preserves populated v1 data [0.04ms]
+1 | export function markdown(_source:string):string { throw new Error("Not implemented"); }
+                                                                                       ^
+error: Not implemented
+      at markdown (/workspace/src/markdown.ts:1:84)
+      at <anonymous> (/workspace/tests/model.test.ts:125:16)
+(fail) Markdown: formats safe text while refusing HTML, script links and remote images [0.06ms]
+
+tests/storage.test.ts:
+1 | export class Storage { constructor(..._args:any[]) { throw new Error("Not implemented"); } }
+                                                                   ^
+error: Not implemented
+      at new Storage (/workspace/src/storage.ts:1:64)
+      at setup (/workspace/tests/storage.test.ts:10:19)
+      at <anonymous> (/workspace/tests/storage.test.ts:17:19)
+(fail) transactions: reload sees committed whole state, stale writers cannot overwrite [0.35ms]
+1 | export class Storage { constructor(..._args:any[]) { throw new Error("Not implemented"); } }
+                                                                   ^
+error: Not implemented
+      at new Storage (/workspace/src/storage.ts:1:64)
+      at setup (/workspace/tests/storage.test.ts:10:19)
+      at <anonymous> (/workspace/tests/storage.test.ts:28:27)
+(fail) journal: failed persistence is never saved; draft recovers on next session [0.15ms]
+1 | export class Storage { constructor(..._args:any[]) { throw new Error("Not implemented"); } }
+                                                                   ^
+error: Not implemented
+      at new Storage (/workspace/src/storage.ts:1:64)
+      at setup (/workspace/tests/storage.test.ts:10:19)
+      at <anonymous> (/workspace/tests/storage.test.ts:44:19)
+(fail) journal: denied local draft storage blocks mutation visibly [0.11ms]
+1 | export class Storage { constructor(..._args:any[]) { throw new Error("Not implemented"); } }
+                                                                   ^
+error: Not implemented
+      at new Storage (/workspace/src/storage.ts:1:64)
+      at setup (/workspace/tests/storage.test.ts:10:19)
+      at <anonymous> (/workspace/tests/storage.test.ts:53:27)
+(fail) rapid mutations: acknowledgment of an earlier transaction does not erase later drafts [0.09ms]
+1 | export class Storage { constructor(..._args:any[]) { throw new Error("Not implemented"); } }
+                                                                   ^
+error: Not implemented
+      at new Storage (/workspace/src/storage.ts:1:64)
+      at setup (/workspace/tests/storage.test.ts:10:19)
+      at <anonymous> (/workspace/tests/storage.test.ts:59:19)
+(fail) snapshots: catch-up creates one per day with seven retained; restore validates [0.13ms]
+1 | export class Storage { constructor(..._args:any[]) { throw new Error("Not implemented"); } }
+                                                                   ^
+error: Not implemented
+      at new Storage (/workspace/src/storage.ts:1:64)
+      at setup (/workspace/tests/storage.test.ts:10:19)
+      at <anonymous> (/workspace/tests/storage.test.ts:67:27)
+(fail) migration: actual version-1 IndexedDB fixture upgrades populated data [0.09ms]
+
+ 0 pass
+ 17 fail
+Ran 17 tests across 2 files. [10.00ms]

@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/browser.test.ts:
+(pass) offline lifecycle: project, inline card, details, filters, archive, restore, delete and undo survive reload [2149.76ms]
+(pass) restart: actual drag order persists after browser shutdown and same-profile file reopen [601.74ms]
+(pass) backup: downloaded workspace restores losslessly into a fresh offline profile [1047.74ms]
+(pass) quota and denial: failed writes show error, preserve local draft and recover [354.46ms]
+(pass) crash: termination during active strict transaction preserves acknowledged state atomically [385.27ms]
+(pass) columns: create, rename, drag, flag done and relocate cards on deletion [854.59ms]
+(pass) existing column name and done flag save automatically without an apply button [270.25ms]
+(pass) draft text survives reload before submission; invalid restore never replaces data [203.25ms]
+(pass) initial IndexedDB denial stays visibly unavailable after retry [534.31ms]
+(pass) second tab cannot edit the same browser workspace concurrently [95.21ms]
+(pass) failed text draft remains visible through unrelated edits and is never reported saved [332.36ms]
+(pass) snapshot startup failure does not duplicate the undo keyboard handler [792.47ms]
+(pass) daily snapshots catch up, retain seven days and restore through the delivered UI [1426.98ms]
+(pass) actual localStorage quota exhaustion is visibly unsaved [571.26ms]
+(pass) performance: built file renders 1000 cards and measures local move acknowledgment [884.35ms]
+(pass) security: CSP and Markdown cause zero external resource requests or application errors [3.29ms]
+
+ 16 pass
+ 0 fail
+ 61 expect() calls
+Ran 16 tests across 1 file. [11.34s]

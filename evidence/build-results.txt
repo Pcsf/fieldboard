@@ -1,0 +1,3 @@
+$ bun run typecheck && bun scripts/build.ts
+$ tsc --noEmit
+Built dist/fieldboard.html (65,078 bytes). External runtime dependencies: zero.

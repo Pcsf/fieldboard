@@ -1,0 +1,98 @@
+import { expect, test } from "bun:test";
+import { chromium, type Page } from "playwright";
+import { mkdtemp, copyFile, rm } from "node:fs/promises";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { baselines, programs, maturities } from "../src/planning";
+
+const saved = async (p: Page) => { await p.getByTestId("storage-status").filter({ hasText: "Saved" }).waitFor(); };
+const persisted = (p: Page) => p.evaluate(async () => new Promise<any>(resolve => {
+  const r = indexedDB.open("fieldboard", 2); r.onsuccess = () => { const db = r.result; const tx = db.transaction("workspace"); const g = tx.objectStore("workspace").get("current"); tx.oncomplete = () => { resolve(g.result); db.close(); }; };
+}));
+
+test("delivered planning: estimates, staffing, sprint load, calibration, drafts and backup survive offline reload", async () => {
+  const build = Bun.spawn(["bun", "scripts/build.ts"], { stdout: "pipe", stderr: "pipe" }); expect(await build.exited).toBe(0);
+  const root = await mkdtemp(join(process.cwd(), ".fieldboard-test-planning-"));
+  const file = join(root, "fieldboard.html"); await copyFile("dist/fieldboard.html", file);
+  const context = await chromium.launchPersistentContext(join(root, "profile"), { executablePath: process.env.CHROMIUM_PATH || "/usr/sbin/chromium", headless: true, chromiumSandbox: process.getuid?.() !== 0, env: { ...process.env, TMPDIR: root }, viewport: { width: 1440, height: 1100 }, acceptDownloads: true });
+  context.setDefaultTimeout(6000); await context.setOffline(true);
+  const errors: string[] = [], requests: string[] = [];
+  await context.route(/^https?:/, r => { requests.push(r.request().url()); return r.abort(); });
+  const page = context.pages()[0]!; page.on("pageerror", e => errors.push(e.message));
+  try {
+    await page.goto(pathToFileURL(file).href); await saved(page);
+    await page.getByRole("button", { name: "New project", exact: true }).click();
+    await page.getByLabel("Project name", { exact: true }).fill("IED project");
+    await page.getByRole("button", { name: "Create project", exact: true }).click(); await saved(page);
+    await page.locator(".column").first().getByRole("button", { name: "Add card at bottom" }).click();
+    await page.getByPlaceholder("Card title").fill("CSR"); await page.getByPlaceholder("Card title").press("Enter"); await saved(page);
+    await page.getByRole("button", { name: "Open card: CSR", exact: true }).click();
+    await page.getByLabel("Estimate", { exact: true }).fill("77"); await page.getByLabel("Estimate", { exact: true }).press("Tab"); await saved(page);
+    await page.getByRole("button", { name: "Start IED estimate", exact: true }).click();
+    expect(await page.getByLabel("IED baseline", { exact: true }).locator("option").allTextContents()).toEqual([...baselines.map(b => b.name), "Custom / calibrated baseline"]);
+    await page.getByLabel("IED baseline", { exact: true }).selectOption({ label: "Hand-written register bank / CSR with decode logic" });
+    await page.getByLabel("Requested scope", { exact: true }).fill("Decode and access side effects");
+    await page.getByLabel("Verification factor", { exact: true }).fill("1.8"); await page.getByLabel("Verification factor", { exact: true }).press("Tab");
+    await page.getByLabel("Sprint number", { exact: true }).fill("1"); await page.getByLabel("Sprint number", { exact: true }).press("Tab"); await saved(page);
+    expect(await page.locator("#effort-result").textContent()).toContain("4.70 IED");
+    await page.getByLabel("Actual IED", { exact: true }).fill("6");
+    await page.getByLabel("Missed factor / learning", { exact: true }).fill('Legacy reset behavior <img src="https://example.invalid/probe" onerror="window.pwned=1">');
+    await page.getByRole("button", { name: "Log calibration", exact: true }).click(); await saved(page);
+    await page.getByRole("button", { name: "Close card", exact: true }).click();
+    await page.getByRole("button", { name: "Effort & planning", exact: true }).click();
+    await page.getByRole("button", { name: "Enable project planning", exact: true }).click(); await saved(page);
+    expect(await page.getByLabel("Program type", { exact: true }).locator("option").allTextContents()).toEqual(programs.map(p => p.name));
+    expect(await page.getByLabel("Top-level spec maturity", { exact: true }).locator("option").allTextContents()).toEqual(maturities.map(m => m.name));
+    expect(await page.getByLabel("Build system / CI automation minimum IED", { exact: true }).count()).toBe(1);
+    expect(await page.getByLabel("Initial timing closure pass minimum IED", { exact: true }).count()).toBe(1);
+    expect(await page.getByLabel("Hardware bring-up spike (ILA/SignalTap, probing, lab) minimum IED", { exact: true }).count()).toBe(1);
+    expect(await page.getByLabel("Documentation (register manual, block diagrams) · fraction of RTL", { exact: true }).count()).toBe(1);
+    expect(await page.locator("#planning-results").textContent()).toContain("5.53 IED / sprint");
+    expect(await page.locator("#planning-results").textContent()).toContain("Over capacity");
+    expect(await page.locator("#planning-results").textContent()).toContain("Coarse scoping only:");
+    expect(await page.locator("#planning-results img, #planning-results script").count()).toBe(0);
+    await page.getByLabel("Allocated FTE", { exact: true }).fill("0.5"); await page.getByLabel("Allocated FTE", { exact: true }).press("Tab");
+    await page.getByLabel("Team efficiency", { exact: true }).fill("0.8"); await page.getByLabel("Team efficiency", { exact: true }).press("Tab"); await saved(page);
+    expect(await page.locator("#planning-results").textContent()).toContain("2.21 IED / sprint");
+    await page.screenshot({ path: "evidence/planning-project.png", fullPage: true });
+    await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+    const before = await persisted(page); expect(before.cards[0].estimate).toBe(77);
+    expect(before.cards[0].calibrations[0].inputs.scope).toBe("Decode and access side effects");
+    await page.reload(); await saved(page); expect(await persisted(page)).toEqual(before);
+    await page.getByRole("button", { name: "Open card: CSR", exact: true }).click();
+    expect(await page.getByLabel("Verification factor", { exact: true }).inputValue()).toBe("1.8");
+    expect(await page.locator("#calibration-history").textContent()).toContain("Legacy reset behavior");
+    expect(await page.locator("#calibration-history img, #calibration-history script").count()).toBe(0);
+    await page.screenshot({ path: "evidence/planning-card.png", fullPage: true });
+    await page.getByLabel("Spec factor", { exact: true }).fill("5"); await page.getByLabel("Spec factor", { exact: true }).press("Tab"); await saved(page);
+    expect(await page.locator("#effort-result").textContent()).toContain("Architecture gap");
+    await page.getByRole("button", { name: "Close card", exact: true }).click();
+    await page.getByRole("button", { name: "Effort & planning", exact: true }).click();
+    expect(await page.locator("#planning-results").textContent()).toContain("Calendar quote withheld");
+    await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+    await page.getByRole("button", { name: "Open card: CSR", exact: true }).click();
+    await page.getByLabel("Spec factor", { exact: true }).fill("1"); await page.getByLabel("Spec factor", { exact: true }).press("Tab"); await saved(page);
+    await page.getByText("Baseline split (IED)", { exact: true }).click();
+    await page.getByLabel("RTL minimum IED", { exact: true }).fill("-2"); await page.getByLabel("RTL minimum IED", { exact: true }).press("Tab");
+    await page.getByTestId("storage-status").filter({ hasText: "Not saved" }).waitFor();
+    expect((await persisted(page)).cards[0].effort.rtl[0]).toBe(2);
+    await page.reload(); await saved(page); await page.getByRole("button", { name: "Open card: CSR", exact: true }).click();
+    await page.getByText("Baseline split (IED)", { exact: true }).click();
+    expect(await page.getByLabel("RTL minimum IED", { exact: true }).inputValue()).toBe("-2");
+    await page.getByLabel("RTL minimum IED", { exact: true }).fill("2"); await page.getByLabel("RTL minimum IED", { exact: true }).press("Tab"); await saved(page);
+    // A failed text journal cannot be bypassed by the new numeric controls.
+    await page.evaluate(() => { const set = Storage.prototype.setItem; Storage.prototype.setItem = function(k, v) { if (k === "fieldboard-text" && v.includes("denied planning text")) throw new DOMException("Denied", "QuotaExceededError"); set.call(this, k, v); }; });
+    await page.getByLabel("Estimate assumptions", { exact: true }).fill("denied planning text");
+    await page.getByTestId("storage-status").filter({ hasText: "Not saved" }).waitFor();
+    expect((await persisted(page)).cards[0].effort.assumptions).not.toBe("denied planning text");
+    await page.getByLabel("Estimate assumptions", { exact: true }).fill("Mature spec"); await saved(page);
+    await page.getByRole("button", { name: "Close card", exact: true }).click();
+    const current = await persisted(page); const download = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Download backup", exact: true }).click();
+    const backup = await download; const backupPath = join(root, "backup.json"); await backup.saveAs(backupPath);
+    expect(JSON.parse(await Bun.file(backupPath).text())).toEqual(current);
+    const fresh = await context.browser()!.newContext({ offline: true });
+    try { const restored = await fresh.newPage(); await restored.goto(pathToFileURL(file).href); await saved(restored); restored.once("dialog", d => d.accept()); await restored.getByLabel("Restore JSON backup").setInputFiles(backupPath); await restored.getByRole("button", { name: "Open card: CSR", exact: true }).waitFor(); await saved(restored); expect({ ...await persisted(restored), revision: current.revision }).toEqual(current); } finally { await fresh.close(); }
+    expect(errors).toEqual([]); expect(requests).toEqual([]);
+  } finally { await context.close(); await rm(root, { recursive: true, force: true }); }
+}, 60000);

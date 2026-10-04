@@ -1,0 +1,134 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/model.test.ts:
+(pass) project: creates board with the five ordered default columns [1.10ms]
+(pass) columns: add, rename, reorder and delete only with explicit destination [1.50ms]
+(pass) lifecycle: every create, edit, move, archive, restore and delete appends activity [0.75ms]
+(pass) completion: entering, leaving and changing done flags maintains timestamps [0.16ms]
+(pass) order: top, bottom, within-column and cross-column moves keep unique contiguous positions [0.56ms]
+(pass) undo: restores edits, moves and deletes while preserving append-only audit [0.62ms]
+90 | 
+91 | test("undo preserves identities referenced by append-only audit history", () => {
+92 |   const {w,first}=fixture();const card=createCard(w,first.id,"Existing","bottom");const beforeMember=structuredClone(w);
+93 |   w.members.push({id:"bob",name:"Bob",color:"#667b68"});w.settings.actorId="bob";
+94 |   editCard(w,card.id,{title:"Edited by Bob"});undoWorkspace(w,beforeMember);
+95 |   expect(()=>validateWorkspace(w)).not.toThrow();expect(w.members.some(m=>m.id==="bob")).toBe(true);
+                                            ^
+error: expect(received).not.toThrow()
+
+Error name: "Error"
+Error message: "Invalid workspace: unknown activity actor"
+
+      at <anonymous> (/workspace/tests/model.test.ts:95:40)
+(fail) undo preserves identities referenced by append-only audit history [0.46ms]
+(pass) filters: AND semantics, description search, due states and fragment roundtrip [9.33ms]
+(pass) backup > lossless roundtrip includes all entities and activity [0.22ms]
+(pass) backup > rejects invalid fields, relationships, duplicate IDs, dates, schema and future versions [0.74ms]
+(pass) backup > migration preserves populated v1 data [0.28ms]
+(pass) Markdown: formats safe text while refusing HTML, script links and remote images [0.41ms]
+
+tests/storage.test.ts:
+(pass) transactions: reload sees committed whole state, stale writers cannot overwrite [4.52ms]
+(pass) journal: failed persistence is never saved; draft recovers on next session [1.75ms]
+(pass) journal: denied local draft storage blocks mutation visibly [0.65ms]
+(pass) rapid mutations: acknowledgment of an earlier transaction does not erase later drafts [1.10ms]
+(pass) snapshots: catch-up creates one per day with seven retained; restore validates [3.62ms]
+(pass) denial: retry cannot claim saved when persistent storage never opened [0.16ms]
+(pass) denial: completing an older write cannot hide a newer failed draft [0.84ms]
+78 | });
+79 | 
+80 | test("journal ownership: a second tab cannot overwrite a pending recovery journal", () => {
+81 |   const {journal,local}=setup();const other=new DraftJournal(local);journal.read();other.read();
+82 |   const state=populated();state.revision=1;journal.write({baseRevision:0,state});
+83 |   expect(()=>other.write({baseRevision:0,state:{...state,name:"Other tab"}})).toThrow();
+                                                                                   ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: undefined
+
+      at <anonymous> (/workspace/tests/storage.test.ts:83:79)
+(fail) journal ownership: a second tab cannot overwrite a pending recovery journal [0.24ms]
+102 |       this.acknowledged = this.state.revision;
+103 |       const draft = this.journal.read();
+104 |       if (draft) {
+105 |         if (JSON.stringify(draft.state) === JSON.stringify(this.state)) this.journal.clear();
+106 |         else if (draft.baseRevision === this.acknowledged) { this.state = draft.state; this.start(); await this.flush(); return; }
+107 |         else throw new Error("A draft conflicts with stored data. Download drafts before reloading or restoring a backup.");
+                             ^
+error: A draft conflicts with stored data. Download drafts before reloading or restoring a backup.
+      at load (/workspace/src/storage.ts:107:24)
+      at async <anonymous> (/workspace/tests/storage.test.ts:93:88)
+(fail) crash window: a newer draft recovers when its in-flight predecessor already committed [0.94ms]
+(pass) migration: actual version-1 IndexedDB fixture upgrades populated data [0.78ms]
+
+tests/browser.test.ts:
+(pass) offline lifecycle: project, inline card, details, filters, archive, restore, delete and undo survive reload [2220.44ms]
+(pass) restart: actual drag order persists after browser shutdown and same-profile file reopen [582.01ms]
+(pass) backup: downloaded workspace restores losslessly into a fresh offline profile [693.65ms]
+(pass) quota and denial: failed writes show error, preserve local draft and recover [314.22ms]
+(pass) crash: termination during active strict transaction preserves acknowledged state atomically [313.04ms]
+(pass) columns: create, rename, drag, flag done and relocate cards on deletion [760.99ms]
+(pass) draft text survives reload before submission; invalid restore never replaces data [183.16ms]
+(pass) initial IndexedDB denial stays visibly unavailable after retry [527.53ms]
+168 | 
+169 | test("failed text draft remains visible through unrelated edits and is never reported saved",async()=>{
+170 |   await open("Top card");await page.getByPlaceholder("Add subtask").fill("Retain text");await page.getByPlaceholder("Add subtask").press("Enter");await saved();
+171 |   await page.evaluate(()=>{const set=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key==="fieldboard-text" && value.includes("Rejected description"))throw new DOMException("Text journal full","QuotaExceededError");set.call(this,key,value)}});
+172 |   await page.getByLabel("Description",{exact:true}).fill("Rejected description must survive");await page.getByLabel("Complete subtask: Retain text",{exact:true}).check();
+173 |   await state();expect(await page.getByLabel("Description",{exact:true}).inputValue()).toBe("Rejected description must survive");expect(await page.getByTestId("storage-status").textContent()).toContain("Not saved");
+                                                                                             ^
+error: expect(received).toBe(expected)
+
+Expected: "Rejected description must survive"
+Received: ""
+
+      at <anonymous> (/workspace/tests/browser.test.ts:173:88)
+(fail) failed text draft remains visible through unrelated edits and is never reported saved [269.76ms]
+178 |   const fresh=await mkdtemp(join(temporaryRoot,"snapshot-failure-"));const {c,p}=await launch(fresh);
+179 |   try {
+180 |     await p.addInitScript(()=>{const original=IDBDatabase.prototype.transaction;IDBDatabase.prototype.transaction=function(...args:Parameters<typeof original>){if(Array.isArray(args[0]) && args[0].includes("snapshots"))throw new DOMException("Snapshot quota","QuotaExceededError");return original.apply(this,args)}});
+181 |     await p.reload();await p.getByTestId("storage-status").filter({hasText:"Not saved"}).waitFor();
+182 |     for(const title of ["First project","Second project"]){await p.getByRole("button",{name:"New project",exact:true}).click();await p.getByLabel("Project name",{exact:true}).fill(title);await p.getByRole("button",{name:"Create project",exact:true}).click();await saved(p)}
+183 |     await p.keyboard.press("Control+z");await saved(p);expect((await state(p)).projects.map((x:any)=>x.name)).toEqual(["First project"]);
+                                                                                                                    ^
+error: expect(received).toEqual(expected)
+
+- [
+-   "First project",
+- ]
++ []
+
+- Expected  - 3
++ Received  + 1
+
+      at <anonymous> (/workspace/tests/browser.test.ts:183:111)
+(fail) snapshot startup failure does not duplicate the undo keyboard handler [811.10ms]
+201 |       const original=IDBDatabase.prototype.transaction;IDBDatabase.prototype.transaction=function(...args:Parameters<typeof original>){const tx=original.apply(this,args);if(args[1]==="readwrite")tx.addEventListener("complete",()=>{if(values.start)values.commitMs=performance.now()-values.start});return tx};
+202 |     });
+203 |     await p.getByRole("button",{name:"Open card: Performance card 0",exact:true}).dragTo(p.locator(".column").nth(1).locator(".column-heading"));await saved(p);
+204 |     const metrics=await p.evaluate(()=>({...(window as any).__perf,userAgent:navigator.userAgent,cardCount:document.querySelectorAll(".card").length}));
+205 |     await Bun.write("evidence/performance.json",JSON.stringify({...metrics,note:"Headless container measurement, not a mid-range laptop 60 fps certification."},null,2));
+206 |     expect(metrics.commitMs).toBeGreaterThan(0);expect(metrics.commitMs).toBeLessThan(100);expect(metrics.feedbackMs).toBeLessThan(50);
+                                                                               ^
+error: expect(received).toBeLessThan(expected)
+
+Expected: < 100
+Received: 115.09999996423721
+
+      at <anonymous> (/workspace/tests/browser.test.ts:206:74)
+(fail) performance: built file renders 1000 cards and measures local move acknowledgment [880.75ms]
+(pass) security: CSP and Markdown cause zero external resource requests or application errors [3.25ms]
+
+6 tests failed:
+(fail) undo preserves identities referenced by append-only audit history [0.46ms]
+(fail) journal ownership: a second tab cannot overwrite a pending recovery journal [0.24ms]
+(fail) crash window: a newer draft recovers when its in-flight predecessor already committed [0.94ms]
+(fail) failed text draft remains visible through unrelated edits and is never reported saved [269.76ms]
+(fail) snapshot startup failure does not duplicate the undo keyboard handler [811.10ms]
+(fail) performance: built file renders 1000 cards and measures local move acknowledgment [880.75ms]
+
+ 28 pass
+ 6 fail
+ 137 expect() calls
+Ran 34 tests across 3 files. [8.44s]

@@ -1,0 +1,136 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/browser.test.ts:
+(pass) offline lifecycle: project, inline card, details, filters, archive, restore, delete and undo survive reload [2251.57ms]
+(pass) restart: actual drag order persists after browser shutdown and same-profile file reopen [595.39ms]
+(pass) backup: downloaded workspace restores losslessly into a fresh offline profile [711.14ms]
+(pass) quota and denial: failed writes show error, preserve local draft and recover [391.77ms]
+(pass) crash: termination during active strict transaction preserves acknowledged state atomically [379.32ms]
+(pass) columns: create, rename, drag, flag done and relocate cards on deletion [710.21ms]
+150 | },30000);
+151 | 
+152 | test("existing column name and done flag save automatically without an apply button",async()=>{
+153 |   await page.getByRole("button",{name:"Edit column Review",exact:true}).click();
+154 |   await page.getByLabel("Column name",{exact:true}).fill("Quality review");await page.getByLabel("Cards here are done").check();
+155 |   await state();expect((await state()).columns.some((c:any)=>c.name==="Quality review" && c.done)).toBe(true);
+                                                                                                         ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/workspace/tests/browser.test.ts:155:100)
+(fail) existing column name and done flag save automatically without an apply button [140.78ms]
+156 |   await page.getByRole("button",{name:"Close dialog",exact:true}).click();await reload();expect((await state()).columns.some((c:any)=>c.name==="Quality review" && c.done)).toBe(true);
+157 | },20000);
+158 | 
+159 | test("draft text survives reload before submission; invalid restore never replaces data",async()=>{
+160 |   const col=page.locator(".column").filter({has:page.getByRole("heading",{name:"Backlog",exact:true})});
+161 |   await col.getByRole("button",{name:"Add card at bottom"}).click();await col.getByPlaceholder("Card title").fill("Unsubmitted text");await page.reload();await saved();
+                                                                  ^
+TimeoutError: click: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for locator('.column').filter({ has: getByRole('heading', { name: 'Backlog', exact: true }) }).getByRole('button', { name: 'Add card at bottom' })[22m
+[2m    - locator resolved to <button class="add-card" data-add="bottom" aria-label="Add card at bottom">+ Add card</button>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <dialog open="" id="modal" aria-label="Workspace dialog">…</dialog> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <dialog open="" id="modal" aria-label="Workspace dialog">…</dialog> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    15 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is visible, enabled and stable[22m
+[2m       - scrolling into view if needed[22m
+[2m       - done scrolling[22m
+[2m       - <dialog open="" id="modal" aria-label="Workspace dialog">…</dialog> intercepts pointer events[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+  log: [
+  "  - waiting for locator('.column').filter({ has: getByRole('heading', { name: 'Backlog', exact: true }) }).getByRole('button', { name: 'Add card at bottom' })",
+  "    - locator resolved to <button class=\"add-card\" data-add=\"bottom\" aria-label=\"Add card at bottom\">+ Add card</button>",
+  "  - attempting click action", "    2 × waiting for element to be visible, enabled and stable",
+  "      - element is visible, enabled and stable", "      - scrolling into view if needed",
+  "      - done scrolling", "      - <dialog open=\"\" id=\"modal\" aria-label=\"Workspace dialog\">…</dialog> intercepts pointer events",
+  "    - retrying click action", "    - waiting 20ms", "    2 × waiting for element to be visible, enabled and stable",
+  "      - element is visible, enabled and stable", "      - scrolling into view if needed",
+  "      - done scrolling", "      - <dialog open=\"\" id=\"modal\" aria-label=\"Workspace dialog\">…</dialog> intercepts pointer events",
+  "    - retrying click action", "      - waiting 100ms", "    15 × waiting for element to be visible, enabled and stable",
+  "       - element is visible, enabled and stable", "       - scrolling into view if needed",
+  "       - done scrolling", "       - <dialog open=\"\" id=\"modal\" aria-label=\"Workspace dialog\">…</dialog> intercepts pointer events",
+  "     - retrying click action", "       - waiting 500ms"
+],
+
+      at /workspace/tests/browser.test.ts:161:61
+(fail) draft text survives reload before submission; invalid restore never replaces data [8002.89ms]
+(pass) initial IndexedDB denial stays visibly unavailable after retry [537.34ms]
+(pass) second tab cannot edit the same browser workspace concurrently [97.28ms]
+28 | async function add(title:string,column="Backlog") {
+29 |   const col=page.locator(".column").filter({has:page.getByRole("heading",{name:column,exact:true})});
+30 |   await col.getByRole("button",{name:"Add card at bottom"}).click();
+31 |   await col.getByPlaceholder("Card title").fill(title); await col.getByPlaceholder("Card title").press("Enter"); await saved();
+32 | }
+33 | async function open(title:string) { await page.getByRole("button",{name:`Open card: ${title}`,exact:true}).click(); }
+                                                                                                                ^
+TimeoutError: click: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'Open card: Top card', exact: true })[22m
+[2m    - locator resolved to <button class="card" draggable="true" aria-label="Open card: Top card" data-card="6c44d867-399a-47cd-9a7e-30b1af7120a1">…</button>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <dialog open="" id="modal" aria-label="Workspace dialog">…</dialog> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <dialog open="" id="modal" aria-label="Workspace dialog">…</dialog> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    15 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is visible, enabled and stable[22m
+[2m       - scrolling into view if needed[22m
+[2m       - done scrolling[22m
+[2m       - <dialog open="" id="modal" aria-label="Workspace dialog">…</dialog> intercepts pointer events[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+  log: [
+  "  - waiting for getByRole('button', { name: 'Open card: Top card', exact: true })",
+  "    - locator resolved to <button class=\"card\" draggable=\"true\" aria-label=\"Open card: Top card\" data-card=\"6c44d867-399a-47cd-9a7e-30b1af7120a1\">…</button>",
+  "  - attempting click action", "    2 × waiting for element to be visible, enabled and stable",
+  "      - element is visible, enabled and stable", "      - scrolling into view if needed",
+  "      - done scrolling", "      - <dialog open=\"\" id=\"modal\" aria-label=\"Workspace dialog\">…</dialog> intercepts pointer events",
+  "    - retrying click action", "    - waiting 20ms", "    2 × waiting for element to be visible, enabled and stable",
+  "      - element is visible, enabled and stable", "      - scrolling into view if needed",
+  "      - done scrolling", "      - <dialog open=\"\" id=\"modal\" aria-label=\"Workspace dialog\">…</dialog> intercepts pointer events",
+  "    - retrying click action", "      - waiting 100ms", "    15 × waiting for element to be visible, enabled and stable",
+  "       - element is visible, enabled and stable", "       - scrolling into view if needed",
+  "       - done scrolling", "       - <dialog open=\"\" id=\"modal\" aria-label=\"Workspace dialog\">…</dialog> intercepts pointer events",
+  "     - retrying click action", "       - waiting 500ms"
+],
+
+      at open (/workspace/tests/browser.test.ts:33:108)
+      at /workspace/tests/browser.test.ts:181:9
+(fail) failed text draft remains visible through unrelated edits and is never reported saved [8001.36ms]
+(pass) snapshot startup failure does not duplicate the undo keyboard handler [835.69ms]
+(pass) performance: built file renders 1000 cards and measures local move acknowledgment [773.75ms]
+(pass) security: CSP and Markdown cause zero external resource requests or application errors [2.90ms]
+
+ 11 pass
+ 3 fail
+ 51 expect() calls
+Ran 14 tests across 1 file. [24.12s]

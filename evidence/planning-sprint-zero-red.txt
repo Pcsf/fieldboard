@@ -1,0 +1,37 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/planning.test.ts:
+(pass) IED catalog covers all 19 source baselines and keeps uncertainty ranges [0.57ms]
+(pass) module formula applies verification only to verification and factors per module [0.10ms]
+(pass) architecture gate includes verification share and never silently clamps [0.04ms]
+(pass) project formula adds contingency once and overheads after contingency [1.13ms]
+(pass) totals ignore board filters, include archived work and isolate projects [0.47ms]
+(pass) unestimated scope and architecture gaps suppress calendar quotes [0.20ms]
+78 | 
+79 | test("unsized zero defaults never produce a quote or a calibration baseline", () => {
+80 |   const { w, p, c } = fixture(); p.planning = defaultPlanning();
+81 |   const e = defaultEffort(); e.sprint = 1;
+82 |   editCard(w, c.id, { effort: e });
+83 |   expect(sprintLoads(w, p.id)[0]!.unestimated).toBe(1);
+                                                    ^
+error: expect(received).toBe(expected)
+
+Expected: 1
+Received: undefined
+
+      at <anonymous> (/workspace/tests/planning.test.ts:83:48)
+(fail) unsized zero defaults never produce a quote or a calibration baseline [0.40ms]
+(pass) all source baseline splits and top-level bands match the copied tables [0.12ms]
+(pass) top-level bands already contain contingency; integration is additive [0.07ms]
+(pass) coarse scoping has a staffing scenario before cards exist, without pretending detail is complete [0.06ms]
+(pass) sanity comparison flags only estimates outside factor-of-two expanded band [0.15ms]
+(pass) sprint loads include contingency, flag overcapacity and leave overhead reserve visible [0.18ms]
+(pass) calibration freezes estimate inputs and retains multiple observations in activity and undo [1.37ms]
+(pass) optional schema fields preserve old data including unitless estimates and history [0.37ms]
+(pass) validation rejects malformed planning in live records and historical snapshots [1.70ms]
+(pass) planning survives journal recovery, snapshot and fresh-storage backup restore [6.87ms]
+
+ 15 pass
+ 1 fail
+ 81 expect() calls
+Ran 16 tests across 1 file. [22.00ms]

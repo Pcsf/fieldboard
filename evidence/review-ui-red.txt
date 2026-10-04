@@ -1,0 +1,80 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/browser.test.ts:
+(pass) offline lifecycle: project, inline card, details, filters, archive, restore, delete and undo survive reload [2204.20ms]
+(pass) restart: actual drag order persists after browser shutdown and same-profile file reopen [584.45ms]
+(pass) backup: downloaded workspace restores losslessly into a fresh offline profile [724.51ms]
+(pass) quota and denial: failed writes show error, preserve local draft and recover [353.40ms]
+(pass) crash: termination during active strict transaction preserves acknowledged state atomically [371.08ms]
+(pass) columns: create, rename, drag, flag done and relocate cards on deletion [778.86ms]
+(pass) draft text survives reload before submission; invalid restore never replaces data [190.17ms]
+(pass) initial IndexedDB denial stays visibly unavailable after retry [561.79ms]
+165 |     expect(await p.getByTestId("storage-status").textContent()).toContain("Not saved");
+166 |   } finally {await c.close();}
+167 | },20000);
+168 | 
+169 | test("second tab cannot edit the same browser workspace concurrently",async()=>{
+170 |   const other=await context.newPage();try {await other.goto(url);await other.getByTestId("storage-status").filter({hasText:"Not saved"}).waitFor();expect(await other.locator("#error-message").textContent()).toContain("another tab");}finally{await other.close()}
+                                                                                                                                               ^
+TimeoutError: waitFor: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByTestId('storage-status').filter({ hasText: 'Not saved' }) to be visible[22m
+
+  log: [ "  - waiting for getByTestId('storage-status').filter({ hasText: 'Not saved' }) to be visible" ],
+
+      at /workspace/tests/browser.test.ts:170:138
+      at processTicksAndRejections (native:7:39)
+(fail) second tab cannot edit the same browser workspace concurrently [8044.65ms]
+172 | 
+173 | test("failed text draft remains visible through unrelated edits and is never reported saved",async()=>{
+174 |   await open("Top card");await page.getByPlaceholder("Add subtask").fill("Retain text");await page.getByPlaceholder("Add subtask").press("Enter");await saved();
+175 |   await page.evaluate(()=>{const set=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key==="fieldboard-text" && value.includes("Rejected description"))throw new DOMException("Text journal full","QuotaExceededError");set.call(this,key,value)}});
+176 |   await page.getByLabel("Description",{exact:true}).fill("Rejected description must survive");await page.getByLabel("Complete subtask: Retain text",{exact:true}).check();
+177 |   await state();expect(await page.getByLabel("Description",{exact:true}).inputValue()).toBe("Rejected description must survive");expect(await page.getByTestId("storage-status").textContent()).toContain("Not saved");
+                                                                                             ^
+error: expect(received).toBe(expected)
+
+Expected: "Rejected description must survive"
+Received: ""
+
+      at <anonymous> (/workspace/tests/browser.test.ts:177:88)
+(fail) failed text draft remains visible through unrelated edits and is never reported saved [262.36ms]
+182 |   const fresh=await mkdtemp(join(temporaryRoot,"snapshot-failure-"));const {c,p}=await launch(fresh);
+183 |   try {
+184 |     await p.addInitScript(()=>{const original=IDBDatabase.prototype.transaction;IDBDatabase.prototype.transaction=function(...args:Parameters<typeof original>){if(Array.isArray(args[0]) && args[0].includes("snapshots"))throw new DOMException("Snapshot quota","QuotaExceededError");return original.apply(this,args)}});
+185 |     await p.reload();await p.getByTestId("storage-status").filter({hasText:"Not saved"}).waitFor();
+186 |     for(const title of ["First project","Second project"]){await p.getByRole("button",{name:"New project",exact:true}).click();await p.getByLabel("Project name",{exact:true}).fill(title);await p.getByRole("button",{name:"Create project",exact:true}).click();await saved(p)}
+187 |     await p.keyboard.press("Control+z");await saved(p);expect((await state(p)).projects.map((x:any)=>x.name)).toEqual(["First project"]);
+                                                                                                                    ^
+error: expect(received).toEqual(expected)
+
+- [
+-   "First project",
+- ]
++ []
+
+- Expected  - 3
++ Received  + 1
+
+      at <anonymous> (/workspace/tests/browser.test.ts:187:111)
+(fail) snapshot startup failure does not duplicate the undo keyboard handler [721.63ms]
+205 |       const original=IDBDatabase.prototype.transaction;IDBDatabase.prototype.transaction=function(...args:Parameters<typeof original>){const tx=original.apply(this,args);if(args[1]==="readwrite")tx.addEventListener("complete",()=>{if(values.start)values.commitMs=performance.now()-values.start});return tx};
+206 |     });
+207 |     await p.getByRole("button",{name:"Open card: Performance card 0",exact:true}).dragTo(p.locator(".column").nth(1).locator(".column-heading"));await saved(p);
+208 |     const metrics=await p.evaluate(()=>({...(window as any).__perf,userAgent:navigator.userAgent,cardCount:document.querySelectorAll(".card").length}));
+209 |     await Bun.write("evidence/performance.json",JSON.stringify({...metrics,note:"Headless container measurement, not a mid-range laptop 60 fps certification."},null,2));
+210 |     expect(metrics.commitMs).toBeGreaterThan(0);expect(metrics.commitMs).toBeLessThan(100);expect(metrics.feedbackMs).toBeLessThan(50);
+                                                                               ^
+error: expect(received).toBeLessThan(expected)
+
+Expected: < 100
+Received: 115.90000003576279
+
+      at <anonymous> (/workspace/tests/browser.test.ts:210:74)
+(fail) performance: built file renders 1000 cards and measures local move acknowledgment [964.46ms]
+(pass) security: CSP and Markdown cause zero external resource requests or application errors [3.44ms]
+
+ 9 pass
+ 4 fail
+ 51 expect() calls
+Ran 13 tests across 1 file. [16.54s]

@@ -1,0 +1,36 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/planning.test.ts:
+(pass) IED catalog covers all 19 source baselines and keeps uncertainty ranges [0.69ms]
+(pass) module formula applies verification only to verification and factors per module [0.10ms]
+(pass) architecture gate includes verification share and never silently clamps [0.04ms]
+(pass) project formula adds contingency once and overheads after contingency [0.82ms]
+(pass) totals ignore board filters, include archived work and isolate projects [0.33ms]
+(pass) unestimated scope and architecture gaps suppress calendar quotes [0.14ms]
+77 | });
+78 | 
+79 | test("unsized zero defaults never produce a quote or a calibration baseline", () => {
+80 |   const { w, p, c } = fixture(); p.planning = defaultPlanning();
+81 |   editCard(w, c.id, { effort: defaultEffort() });
+82 |   expect(estimateProject(w, p.id).unestimated).toBe(1);
+                                                    ^
+error: expect(received).toBe(expected)
+
+Expected: 1
+Received: 0
+
+      at <anonymous> (/workspace/tests/planning.test.ts:82:48)
+(fail) unsized zero defaults never produce a quote or a calibration baseline [0.19ms]
+(pass) all source baseline splits and top-level bands match the copied tables [0.10ms]
+(pass) top-level bands already contain contingency; integration is additive [0.04ms]
+(pass) sanity comparison flags only estimates outside factor-of-two expanded band [0.10ms]
+(pass) sprint loads include contingency, flag overcapacity and leave overhead reserve visible [0.16ms]
+(pass) calibration freezes estimate inputs and retains multiple observations in activity and undo [0.92ms]
+(pass) optional schema fields preserve old data including unitless estimates and history [0.28ms]
+(pass) validation rejects malformed planning in live records and historical snapshots [1.74ms]
+(pass) planning survives journal recovery, snapshot and fresh-storage backup restore [4.55ms]
+
+ 14 pass
+ 1 fail
+ 77 expect() calls
+Ran 15 tests across 1 file. [19.00ms]

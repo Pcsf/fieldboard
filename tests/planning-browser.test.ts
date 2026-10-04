@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import { chromium, type Page } from "playwright";
 import { mkdtemp, copyFile, rm } from "node:fs/promises";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
 import { baselines, programs, maturities } from "../src/planning";
 
@@ -13,8 +14,10 @@ const persisted = (p: Page) => p.evaluate(async () => new Promise<any>(resolve =
 test("delivered planning: estimates, staffing, sprint load, calibration, drafts and backup survive offline reload", async () => {
   const build = Bun.spawn(["bun", "scripts/build.ts"], { stdout: "pipe", stderr: "pipe" }); expect(await build.exited).toBe(0);
   const root = await mkdtemp(join(process.cwd(), ".fieldboard-test-planning-"));
+  // Chromium creates its singleton socket under TMPDIR, and Unix socket paths are capped at 108 bytes.
+  const socketRoot = await mkdtemp(join(tmpdir(), "fb-"));
   const file = join(root, "fieldboard.html"); await copyFile("dist/fieldboard.html", file);
-  const context = await chromium.launchPersistentContext(join(root, "profile"), { executablePath: process.env.CHROMIUM_PATH || "/usr/sbin/chromium", headless: true, chromiumSandbox: process.getuid?.() !== 0, env: { ...process.env, TMPDIR: root }, viewport: { width: 1440, height: 1100 }, acceptDownloads: true });
+  const context = await chromium.launchPersistentContext(join(root, "profile"), { executablePath: process.env.CHROMIUM_PATH || "/usr/sbin/chromium", headless: true, chromiumSandbox: process.getuid?.() !== 0, env: { ...process.env, TMPDIR: socketRoot }, viewport: { width: 1440, height: 1100 }, acceptDownloads: true });
   context.setDefaultTimeout(6000); await context.setOffline(true);
   const errors: string[] = [], requests: string[] = [];
   await context.route(/^https?:/, r => { requests.push(r.request().url()); return r.abort(); });
@@ -94,5 +97,5 @@ test("delivered planning: estimates, staffing, sprint load, calibration, drafts 
     const fresh = await context.browser()!.newContext({ offline: true });
     try { const restored = await fresh.newPage(); await restored.goto(pathToFileURL(file).href); await saved(restored); restored.once("dialog", d => d.accept()); await restored.getByLabel("Restore JSON backup").setInputFiles(backupPath); await restored.getByRole("button", { name: "Open card: CSR", exact: true }).waitFor(); await saved(restored); expect({ ...await persisted(restored), revision: current.revision }).toEqual(current); } finally { await fresh.close(); }
     expect(errors).toEqual([]); expect(requests).toEqual([]);
-  } finally { await context.close(); await rm(root, { recursive: true, force: true }); }
+  } finally { await context.close(); await rm(root, { recursive: true, force: true }); await rm(socketRoot, { recursive: true, force: true }); }
 }, 60000);

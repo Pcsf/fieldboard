@@ -2,8 +2,8 @@
   "browser": "152.0.7977.82",
   "platform": "linux",
   "offline": true,
-  "url": "file:///workspace/.fieldboard-test-QSMSNa/isolated-de9uUm/fieldboard.html",
-  "rootSandboxException": true,
-  "note": "Root sandbox requires no-sandbox; unflagged Linux acceptance remains open",
-  "testedAt": "2026-10-04T17:15:21.038Z"
+  "url": "file:///home/pficagna/Documents/10-repos/11-gitRepo/fieldboard/.fieldboard-test-GzG5AI/isolated-84nLSp/fieldboard.html",
+  "rootSandboxException": false,
+  "note": "Sandbox enabled",
+  "testedAt": "2026-10-04T18:13:10.055Z"
 }

@@ -40,7 +40,7 @@ Markdown is a deliberately small allowlist renderer, not a general HTML interpre
 
 Bun unit tests cover the domain, draft/revision logic, schema migration and snapshot retention. Playwright exercises the isolated built HTML with networking disabled, using separate persistent profiles for recovery tests. Crash testing kills the actual test-owned browser process while a strict transaction is held open.
 
-The container runs as root, so these Chromium tests require the test harness’s sandbox exception. That is not normal desktop acceptance. No sandbox-disabling instruction is given to end users. The unflagged Linux browser gate, physical 60 fps test and full visual review remain open. Supplemental tests first observed passing after implementation are documented as such rather than being described as red-first proof.
+The container runs as root, so these Chromium tests require the test harness’s sandbox exception. That is not normal desktop acceptance. The same suite also passes as an unprivileged desktop user with the sandbox enabled; a normal headed launch is still unrecorded. No sandbox-disabling instruction is given to end users. The unflagged Linux browser gate, physical 60 fps test and full visual review remain open. Supplemental tests first observed passing after implementation are documented as such rather than being described as red-first proof.
 
 ## Tier boundary
 

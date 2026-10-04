@@ -2,6 +2,7 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import { chromium, type BrowserContext, type Page } from "playwright";
 import { mkdtemp, mkdir, copyFile, readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
 
 let context: BrowserContext;
@@ -10,11 +11,12 @@ let isolated: string;
 let profile: string;
 let url: string;
 let temporaryRoot: string;
+let socketRoot: string;
 const errors: string[]=[];
 const requests: string[]=[];
 const sandboxException=process.getuid?.()===0;
 async function launch(userProfile=profile) {
-  const c=await chromium.launchPersistentContext(userProfile, { executablePath:process.env.CHROMIUM_PATH||"/usr/sbin/chromium", headless:true, env:{...process.env,TMPDIR:temporaryRoot}, chromiumSandbox:!sandboxException, viewport:{width:1440,height:1000}, acceptDownloads:true });
+  const c=await chromium.launchPersistentContext(userProfile, { executablePath:process.env.CHROMIUM_PATH||"/usr/sbin/chromium", headless:true, env:{...process.env,TMPDIR:socketRoot}, chromiumSandbox:!sandboxException, viewport:{width:1440,height:1000}, acceptDownloads:true });
   c.setDefaultTimeout(8000);
   await c.setOffline(true);
   await c.route(/^https?:/,r=>{requests.push(r.request().url());return r.abort()});
@@ -35,9 +37,13 @@ async function closeDetail() { await page.getByRole("button",{name:"Close card"}
 async function state(p=page) { return p.evaluate(async()=>new Promise<any>((resolve,reject)=>{const r=indexedDB.open("fieldboard",2);r.onsuccess=()=>{const db=r.result;const tx=db.transaction("workspace");const g=tx.objectStore("workspace").get("current");g.onsuccess=()=>resolve(g.result);tx.oncomplete=()=>db.close()};r.onerror=()=>reject(r.error)})); }
 
 beforeAll(async()=>{
+  // Bun 1.3.x drops Playwright's browser pipe mid-suite; the browser exits and later tests hang.
+  if(Bun.semver.order(Bun.version,"1.4.0")<0) throw new Error(`Browser tests need Bun 1.4.0 or later; found ${Bun.version}.`);
   const build=Bun.spawn(["bun","scripts/build.ts"],{stdout:"pipe",stderr:"pipe"});
   const status=await build.exited; if(status!==0) throw new Error(await new Response(build.stderr).text());
   temporaryRoot=await mkdtemp(join(process.cwd(),".fieldboard-test-"));
+  // Chromium creates its singleton socket under TMPDIR, and Unix socket paths are capped at 108 bytes.
+  socketRoot=await mkdtemp(join(tmpdir(),"fb-"));
   isolated=await mkdtemp(join(temporaryRoot,"isolated-"));profile=await mkdtemp(join(temporaryRoot,"profile-"));
   await copyFile("dist/fieldboard.html",join(isolated,"fieldboard.html")); expect(await readdir(isolated)).toEqual(["fieldboard.html"]);
   url=pathToFileURL(join(isolated,"fieldboard.html")).href;
@@ -45,7 +51,7 @@ beforeAll(async()=>{
   ({c:context,p:page}=await launch());
   await Bun.write("evidence/browser-environment.json",JSON.stringify({browser:context.browser()!.version(),platform:process.platform,offline:true,url,rootSandboxException:sandboxException,note:sandboxException?"Root sandbox requires no-sandbox; unflagged Linux acceptance remains open":"Sandbox enabled",testedAt:new Date().toISOString()},null,2));
 },60000);
-afterAll(async()=>{await context?.close().catch(()=>{});if(temporaryRoot)await rm(temporaryRoot,{recursive:true,force:true});});
+afterAll(async()=>{await context?.close().catch(()=>{});if(temporaryRoot)await rm(temporaryRoot,{recursive:true,force:true});if(socketRoot)await rm(socketRoot,{recursive:true,force:true});});
 
 test("offline lifecycle: project, inline card, details, filters, archive, restore, delete and undo survive reload",async()=>{
   await page.screenshot({path:"evidence/01-offline-first-launch.png",fullPage:true});
@@ -126,7 +132,8 @@ test("crash: termination during active strict transaction preserves acknowledged
   const browserPids: number[]=[];
   for (const entry of await readdir("/proc")) {
     if (!/^\d+$/.test(entry)) continue;
-    try { const args=(await Bun.file(`/proc/${entry}/cmdline`).text()).split("\0"); if(args.includes(`--user-data-dir=${profile}`) && !args.some(a=>a.startsWith("--type="))) browserPids.push(Number(entry)); } catch { /* process exited */ }
+    // Some Linux Chromium builds rewrite their argv into one space-joined string.
+    try { const args=(await Bun.file(`/proc/${entry}/cmdline`).text()).split(/[\0 ]/); if(args.includes(`--user-data-dir=${profile}`) && !args.some(a=>a.startsWith("--type="))) browserPids.push(Number(entry)); } catch { /* process exited */ }
   }
   expect(browserPids).toHaveLength(1);
   process.kill(browserPids[0]!,"SIGKILL");

@@ -1,0 +1,42 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/planning.test.ts:
+(pass) IED catalog covers all 19 source baselines and keeps uncertainty ranges [0.58ms]
+(pass) module formula applies verification only to verification and factors per module [0.11ms]
+(pass) architecture gate includes verification share and never silently clamps [0.05ms]
+38 |   expect(estimateModule(e).architectureGap).toBe(true);
+39 | });
+40 | 
+41 | test("architecture gate handles zero lower bounds without inventing a non-verification share", () => {
+42 |   const e = defaultEffort("golden-model"); e.verification = [0, 3]; e.factors.verification = .8; e.factors.spec = 5;
+43 |   expect(estimateModule(e).multiplier).toBeCloseTo(4);
+                                            ^
+error: expect(received).toBeCloseTo(expected, precision)
+
+Expected: 4
+Received: 5
+
+Expected precision: 2
+Expected difference: < 0.005
+Received difference: 1
+
+      at <anonymous> (/workspace/tests/planning.test.ts:43:40)
+(fail) architecture gate handles zero lower bounds without inventing a non-verification share [0.19ms]
+(pass) project formula adds contingency once and overheads after contingency [1.17ms]
+(pass) totals ignore board filters, include archived work and isolate projects [0.47ms]
+(pass) unestimated scope and architecture gaps suppress calendar quotes [0.21ms]
+(pass) unsized zero defaults never produce a quote or a calibration baseline [0.36ms]
+(pass) all source baseline splits and top-level bands match the copied tables [0.12ms]
+(pass) top-level bands already contain contingency; integration is additive [0.04ms]
+(pass) coarse scoping has a staffing scenario before cards exist, without pretending detail is complete [0.06ms]
+(pass) sanity comparison flags only estimates outside factor-of-two expanded band [0.14ms]
+(pass) sprint loads include contingency, flag overcapacity and leave overhead reserve visible [0.18ms]
+(pass) calibration freezes estimate inputs and retains multiple observations in activity and undo [1.30ms]
+(pass) optional schema fields preserve old data including unitless estimates and history [0.36ms]
+(pass) validation rejects malformed planning in live records and historical snapshots [1.74ms]
+(pass) planning survives journal recovery, snapshot and fresh-storage backup restore [6.86ms]
+
+ 16 pass
+ 1 fail
+ 85 expect() calls
+Ran 17 tests across 1 file. [22.00ms]

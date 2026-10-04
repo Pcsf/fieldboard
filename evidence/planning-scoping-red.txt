@@ -1,0 +1,33 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/planning.test.ts:
+(pass) IED catalog covers all 19 source baselines and keeps uncertainty ranges [0.57ms]
+(pass) module formula applies verification only to verification and factors per module [0.10ms]
+(pass) architecture gate includes verification share and never silently clamps [0.04ms]
+(pass) project formula adds contingency once and overheads after contingency [1.13ms]
+(pass) totals ignore board filters, include archived work and isolate projects [0.49ms]
+(pass) unestimated scope and architecture gaps suppress calendar quotes [0.21ms]
+(pass) unsized zero defaults never produce a quote or a calibration baseline [0.21ms]
+(pass) all source baseline splits and top-level bands match the copied tables [0.13ms]
+(pass) top-level bands already contain contingency; integration is additive [0.04ms]
+107 | 
+108 | test("coarse scoping has a staffing scenario before cards exist, without pretending detail is complete", () => {
+109 |   const w = createWorkspace(); const p = createProject(w, "Scope first"); p.planning = defaultPlanning();
+110 |   const r = estimateProject(w, p.id);
+111 |   expect(r.weeks).toBeNull();
+112 |   expect(r.bandWeeks![0]).toBeCloseTo(15 / (5 * .65 * .85));
+                 ^
+TypeError: undefined is not an object (evaluating 'r.bandWeeks[0]')
+      at <anonymous> (/workspace/tests/planning.test.ts:112:12)
+(fail) coarse scoping has a staffing scenario before cards exist, without pretending detail is complete [0.18ms]
+(pass) sanity comparison flags only estimates outside factor-of-two expanded band [0.17ms]
+(pass) sprint loads include contingency, flag overcapacity and leave overhead reserve visible [0.30ms]
+(pass) calibration freezes estimate inputs and retains multiple observations in activity and undo [1.33ms]
+(pass) optional schema fields preserve old data including unitless estimates and history [0.34ms]
+(pass) validation rejects malformed planning in live records and historical snapshots [1.79ms]
+(pass) planning survives journal recovery, snapshot and fresh-storage backup restore [7.22ms]
+
+ 15 pass
+ 1 fail
+ 80 expect() calls
+Ran 16 tests across 1 file. [22.00ms]

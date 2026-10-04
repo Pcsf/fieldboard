@@ -1,0 +1,61 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/artifact.test.ts:
+(pass) build delivers one self-contained HTML file [1.79ms]
+
+tests/model.test.ts:
+(pass) project: creates board with the five ordered default columns [0.83ms]
+(pass) columns: add, rename, reorder and delete only with explicit destination [1.20ms]
+(pass) lifecycle: every create, edit, move, archive, restore and delete appends activity [0.73ms]
+(pass) completion: entering, leaving and changing done flags maintains timestamps [0.24ms]
+(pass) order: top, bottom, within-column and cross-column moves keep unique contiguous positions [0.53ms]
+(pass) undo: restores edits, moves and deletes while preserving append-only audit [0.67ms]
+(pass) undo preserves identities referenced by append-only audit history [0.35ms]
+(pass) filters: AND semantics, description search, due states and fragment roundtrip [9.00ms]
+(pass) backup > lossless roundtrip includes all entities and activity [0.25ms]
+(pass) backup > rejects invalid fields, relationships, duplicate IDs, dates, schema and future versions [0.76ms]
+(pass) backup > migration preserves populated v1 data [0.28ms]
+(pass) Markdown: formats safe text while refusing HTML, script links and remote images [0.38ms]
+
+tests/storage.test.ts:
+(pass) transactions: reload sees committed whole state, stale writers cannot overwrite [4.26ms]
+(pass) journal: failed persistence is never saved; draft recovers on next session [1.57ms]
+(pass) journal: denied local draft storage blocks mutation visibly [0.56ms]
+(pass) rapid mutations: acknowledgment of an earlier transaction does not erase later drafts [0.96ms]
+(pass) snapshots: catch-up creates one per day with seven retained; restore validates [3.44ms]
+(pass) denial: retry cannot claim saved when persistent storage never opened [0.16ms]
+(pass) denial: completing an older write cannot hide a newer failed draft [0.76ms]
+(pass) journal ownership: a second tab cannot overwrite a pending recovery journal [0.22ms]
+(pass) crash window: a newer draft recovers when its in-flight predecessor already committed [1.15ms]
+(pass) migration: actual version-1 IndexedDB fixture upgrades populated data [0.79ms]
+
+tests/browser.test.ts:
+(pass) offline lifecycle: project, inline card, details, filters, archive, restore, delete and undo survive reload [2263.53ms]
+(pass) restart: actual drag order persists after browser shutdown and same-profile file reopen [549.94ms]
+(pass) backup: downloaded workspace restores losslessly into a fresh offline profile [1013.67ms]
+(pass) quota and denial: failed writes show error, preserve local draft and recover [350.42ms]
+(pass) crash: termination during active strict transaction preserves acknowledged state atomically [389.14ms]
+(pass) columns: create, rename, drag, flag done and relocate cards on deletion [813.75ms]
+(pass) existing column name and done flag save automatically without an apply button [235.73ms]
+(pass) draft text survives reload before submission; invalid restore never replaces data [169.68ms]
+(pass) initial IndexedDB denial stays visibly unavailable after retry [536.23ms]
+(pass) second tab cannot edit the same browser workspace concurrently [76.84ms]
+(pass) failed text draft remains visible through unrelated edits and is never reported saved [315.25ms]
+(pass) snapshot startup failure does not duplicate the undo keyboard handler [792.49ms]
+(pass) daily snapshots catch up, retain seven days and restore through the delivered UI [1369.29ms]
+(pass) actual localStorage quota exhaustion is visibly unsaved [587.54ms]
+(pass) performance: built file renders 1000 cards and measures local move acknowledgment [806.86ms]
+(pass) security: CSP and Markdown cause zero external resource requests or application errors [3.04ms]
+
+tests/config.test.ts:
+(pass) development uses strict TypeScript without emitting adjacent runtime files [0.18ms]
+(pass) development dependencies are pinned rather than floating [0.16ms]
+
+tests/docs.test.ts:
+(pass) README documents standalone usage, verification limits and backup safety [0.16ms]
+(pass) technical decisions document storage, security and single-file bundling [0.07ms]
+
+ 43 pass
+ 0 fail
+ 200 expect() calls
+Ran 43 tests across 6 files. [11.14s]

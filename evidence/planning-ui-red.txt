@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/planning-browser.test.ts:
+25 |     await page.getByRole("button", { name: "Create project", exact: true }).click(); await saved(page);
+26 |     await page.locator(".column").first().getByRole("button", { name: "Add card at bottom" }).click();
+27 |     await page.getByPlaceholder("Card title").fill("CSR"); await page.getByPlaceholder("Card title").press("Enter"); await saved(page);
+28 |     await page.getByRole("button", { name: "Open card: CSR", exact: true }).click();
+29 |     await page.getByLabel("Estimate", { exact: true }).fill("77"); await page.getByLabel("Estimate", { exact: true }).press("Tab"); await saved(page);
+30 |     await page.getByRole("button", { name: "Start IED estimate", exact: true }).click();
+                                                                                     ^
+TimeoutError: click: Timeout 6000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'Start IED estimate', exact: true })[22m
+
+  log: [ "  - waiting for getByRole('button', { name: 'Start IED estimate', exact: true })" ],
+
+      at /workspace/tests/planning-browser.test.ts:30:81
+      at processTicksAndRejections (native:7:39)
+(fail) delivered planning: estimates, staffing, sprint load, calibration, drafts and backup survive offline reload [6723.47ms]
+
+ 0 pass
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [7.03s]

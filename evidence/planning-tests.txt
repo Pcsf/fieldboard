@@ -1,0 +1,84 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/artifact.test.ts:
+(pass) build delivers one self-contained HTML file [1.45ms]
+
+tests/model.test.ts:
+(pass) project: creates board with the five ordered default columns [0.50ms]
+(pass) columns: add, rename, reorder and delete only with explicit destination [0.82ms]
+(pass) lifecycle: every create, edit, move, archive, restore and delete appends activity [0.50ms]
+(pass) completion: entering, leaving and changing done flags maintains timestamps [0.11ms]
+(pass) order: top, bottom, within-column and cross-column moves keep unique contiguous positions [0.38ms]
+(pass) undo: restores edits, moves and deletes while preserving append-only audit [0.48ms]
+(pass) undo preserves identities referenced by append-only audit history [0.23ms]
+(pass) filters: AND semantics, description search, due states and fragment roundtrip [6.29ms]
+(pass) backup > lossless roundtrip includes all entities and activity [0.13ms]
+(pass) backup > rejects invalid fields, relationships, duplicate IDs, dates, schema and future versions [0.52ms]
+(pass) backup > migration preserves populated v1 data [0.18ms]
+(pass) Markdown: formats safe text while refusing HTML, script links and remote images [0.25ms]
+
+tests/storage.test.ts:
+(pass) transactions: reload sees committed whole state, stale writers cannot overwrite [2.62ms]
+(pass) journal: failed persistence is never saved; draft recovers on next session [0.98ms]
+(pass) journal: denied local draft storage blocks mutation visibly [0.32ms]
+(pass) rapid mutations: acknowledgment of an earlier transaction does not erase later drafts [0.61ms]
+(pass) snapshots: catch-up creates one per day with seven retained; restore validates [2.26ms]
+(pass) denial: retry cannot claim saved when persistent storage never opened [0.10ms]
+(pass) denial: completing an older write cannot hide a newer failed draft [0.45ms]
+(pass) journal ownership: a second tab cannot overwrite a pending recovery journal [0.12ms]
+(pass) crash window: a newer draft recovers when its in-flight predecessor already committed [0.64ms]
+(pass) migration: actual version-1 IndexedDB fixture upgrades populated data [0.43ms]
+
+tests/browser.test.ts:
+(pass) offline lifecycle: project, inline card, details, filters, archive, restore, delete and undo survive reload [2322.53ms]
+(pass) restart: actual drag order persists after browser shutdown and same-profile file reopen [621.37ms]
+(pass) backup: downloaded workspace restores losslessly into a fresh offline profile [1225.03ms]
+(pass) quota and denial: failed writes show error, preserve local draft and recover [358.60ms]
+(pass) crash: termination during active strict transaction preserves acknowledged state atomically [362.99ms]
+(pass) columns: create, rename, drag, flag done and relocate cards on deletion [781.99ms]
+(pass) existing column name and done flag save automatically without an apply button [310.84ms]
+(pass) draft text survives reload before submission; invalid restore never replaces data [245.51ms]
+(pass) initial IndexedDB denial stays visibly unavailable after retry [537.49ms]
+(pass) second tab cannot edit the same browser workspace concurrently [111.17ms]
+(pass) failed text draft remains visible through unrelated edits and is never reported saved [311.83ms]
+(pass) snapshot startup failure does not duplicate the undo keyboard handler [783.43ms]
+(pass) daily snapshots catch up, retain seven days and restore through the delivered UI [1553.45ms]
+(pass) actual localStorage quota exhaustion is visibly unsaved [590.81ms]
+(pass) performance: built file renders 1000 cards and measures local move acknowledgment [828.50ms]
+(pass) security: CSP and Markdown cause zero external resource requests or application errors [3.23ms]
+
+tests/config.test.ts:
+(pass) development uses strict TypeScript without emitting adjacent runtime files [0.21ms]
+(pass) development dependencies are pinned rather than floating [0.21ms]
+
+tests/docs.test.ts:
+(pass) README documents standalone usage, verification limits and backup safety [0.23ms]
+(pass) planning documentation explains IED, formulas, legacy compatibility and scope limits [0.13ms]
+(pass) technical decisions document storage, security and single-file bundling [0.12ms]
+
+tests/planning.test.ts:
+(pass) IED catalog covers all 19 source baselines and keeps uncertainty ranges [0.39ms]
+(pass) module formula applies verification only to verification and factors per module [0.09ms]
+(pass) architecture gate includes verification share and never silently clamps [0.06ms]
+(pass) architecture gate handles zero lower bounds without inventing a non-verification share [0.04ms]
+(pass) project formula adds contingency once and overheads after contingency [0.70ms]
+(pass) totals ignore board filters, include archived work and isolate projects [0.33ms]
+(pass) unestimated scope and architecture gaps suppress calendar quotes [0.22ms]
+(pass) unsized zero defaults never produce a quote or a calibration baseline [0.37ms]
+(pass) all source baseline splits and top-level bands match the copied tables [0.13ms]
+(pass) top-level bands already contain contingency; integration is additive [0.04ms]
+(pass) coarse scoping has a staffing scenario before cards exist, without pretending detail is complete [0.07ms]
+(pass) sanity comparison flags only estimates outside factor-of-two expanded band [0.15ms]
+(pass) sprint loads include contingency, flag overcapacity and leave overhead reserve visible [0.13ms]
+(pass) calibration freezes estimate inputs and retains multiple observations in activity and undo [0.78ms]
+(pass) optional schema fields preserve old data including unitless estimates and history [0.22ms]
+(pass) validation rejects malformed planning in live records and historical snapshots [1.58ms]
+(pass) planning survives journal recovery, snapshot and fresh-storage backup restore [2.93ms]
+
+tests/planning-browser.test.ts:
+(pass) delivered planning: estimates, staffing, sprint load, calibration, drafts and backup survive offline reload [2615.17ms]
+
+ 62 pass
+ 0 fail
+ 320 expect() calls
+Ran 62 tests across 8 files. [14.67s]

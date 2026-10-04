@@ -1,0 +1,52 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/artifact.test.ts:
+2 | import { readdir } from "node:fs/promises";
+3 | 
+4 | // C01: the build contract is exactly one standalone, offline HTML artifact.
+5 | test("build delivers one self-contained HTML file", async () => {
+6 |   const artifact = Bun.file("dist/fieldboard.html");
+7 |   expect(await artifact.exists()).toBe(true);
+                                      ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/workspace/tests/artifact.test.ts:7:35)
+(fail) build delivers one self-contained HTML file [0.42ms]
+
+tests/model.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+error: Cannot find module '../src/model' from '/workspace/tests/model.test.ts'
+-------------------------------
+
+
+tests/storage.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+error: Cannot find module '../src/storage' from '/workspace/tests/storage.test.ts'
+-------------------------------
+
+
+tests/browser.test.ts:
+33 | async function closeDetail() { await page.getByRole("button",{name:"Close card"}).click(); }
+34 | async function state(p=page) { return p.evaluate(async()=>new Promise<any>((resolve,reject)=>{const r=indexedDB.open("fieldboard",2);r.onsuccess=()=>{const db=r.result;const tx=db.transaction("workspace");const g=tx.objectStore("workspace").get("current");g.onsuccess=()=>resolve(g.result);tx.oncomplete=()=>db.close()};r.onerror=()=>reject(r.error)})); }
+35 | 
+36 | beforeAll(async()=>{
+37 |   const build=Bun.spawn(["bun","scripts/build.ts"],{stdout:"pipe",stderr:"pipe"});
+38 |   const status=await build.exited; if(status!==0) throw new Error(await new Response(build.stderr).text());
+                                                                 ^
+error: error: Module not found "scripts/build.ts"
+
+      at <anonymous> (/workspace/tests/browser.test.ts:38:61)
+(fail) (unnamed) [3.08ms]
+
+ 0 pass
+ 4 fail
+ 2 errors
+ 1 expect() calls
+Ran 4 tests across 4 files. [384.00ms]

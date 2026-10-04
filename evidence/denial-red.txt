@@ -1,0 +1,42 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/storage.test.ts:
+(pass) transactions: reload sees committed whole state, stale writers cannot overwrite [5.82ms]
+(pass) journal: failed persistence is never saved; draft recovers on next session [1.75ms]
+(pass) journal: denied local draft storage blocks mutation visibly [0.59ms]
+(pass) rapid mutations: acknowledgment of an earlier transaction does not erase later drafts [1.02ms]
+(pass) snapshots: catch-up creates one per day with seven retained; restore validates [3.54ms]
+63 |   expect(snapshots[0]!.state).toEqual(w); storage.close();
+64 | });
+65 | 
+66 | test("denial: retry cannot claim saved when persistent storage never opened", async () => {
+67 |   const {storage,journal}=setup(); const s=new Session(storage,journal);
+68 |   await expect(s.load()).rejects.toThrow(); s.retry(); await s.flush(); expect(s.status).toBe("error");
+                                                                                              ^
+error: expect(received).toBe(expected)
+
+Expected: "error"
+Received: "saved"
+
+      at <anonymous> (/workspace/tests/storage.test.ts:68:90)
+(fail) denial: retry cannot claim saved when persistent storage never opened [0.35ms]
+71 | test("denial: completing an older write cannot hide a newer failed draft", async () => {
+72 |   const {storage,journal,local}=setup();await storage.open();const s=new Session(storage,journal);await s.load();
+73 |   const original=storage.commit.bind(storage);let release!:()=>void;const gate=new Promise<void>(r=>release=r);
+74 |   storage.commit=async(w,rev)=>{await gate;await original(w,rev)};
+75 |   s.change(w=>createProject(w,"Accepted"));local.setItem=()=>{throw new DOMException("Denied","SecurityError")};
+76 |   expect(()=>s.change(w=>createProject(w,"Rejected"))).toThrow();release();await s.flush();expect(s.status).toBe("error");
+                                                                                                                 ^
+error: expect(received).toBe(expected)
+
+Expected: "error"
+Received: "saved"
+
+      at <anonymous> (/workspace/tests/storage.test.ts:76:109)
+(fail) denial: completing an older write cannot hide a newer failed draft [0.81ms]
+(pass) migration: actual version-1 IndexedDB fixture upgrades populated data [0.80ms]
+
+ 6 pass
+ 2 fail
+ 25 expect() calls
+Ran 8 tests across 1 file. [23.00ms]

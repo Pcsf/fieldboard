@@ -17,11 +17,11 @@ The HTML is the application, not the workspace data. It does not rewrite itself.
 
 | Browser | Direct-file evidence | Support status |
 |---|---|---|
-| Chromium 152.0.7977.82, Linux | Automated offline `file://` workflow, browser restart, process crash, backups, quota handling and screenshots | Tested in a root container with Playwright and `--no-sandbox`; not certified for normal desktop use |
+| Chromium 152.0.7977.82, Linux | Automated offline `file://` workflow, browser restart, process crash, backups, quota handling and screenshots | Full suite passes headless on an unprivileged Linux desktop with the Chromium sandbox enabled, and in a root container with `--no-sandbox`; a normal headed launch is not yet recorded |
 | Firefox 155.0.1, Linux | Binary available; application acceptance suite not run | Unverified |
 | Other browsers, operating systems or profiles | No acceptance evidence | Unverified |
 
-The mandatory Linux desktop run **without special browser flags remains open**. Do not disable your browser sandbox to use the application. This environment cannot establish that release requirement. The application itself contains no flag-dependent file access, fetches or server calls.
+The automated suite passes with Chromium’s sandbox enabled on an unprivileged Linux desktop (Bun 1.4.0; `evidence/desktop-sandbox-tests.txt`). It still runs headless under Playwright’s automation flags, so the mandatory Linux desktop run **without special browser flags remains open** until a normal headed launch is recorded. Do not disable your browser sandbox to use the application. The application itself contains no flag-dependent file access, fetches or server calls.
 
 Additional open checks:
 
@@ -189,7 +189,9 @@ CHROMIUM_PATH=/path/to/chromium bun test
 
 Tests copy only the HTML into an empty directory, use fresh persistent profiles, disable page networking and run without a preview server. They restart the same profile and path, send SIGKILL to the test-owned Chromium process during a held strict transaction, verify backup recovery in another profile, inject IndexedDB write failures, and actually fill localStorage to its quota. Real IndexedDB quota exhaustion remains fault-injected rather than physically filled.
 
-Temporary browser data uses a test-owned directory under the project root, removed by test teardown. This avoids the development container’s small `/tmp` mount. The tests disable Chromium’s sandbox only when the harness runs as root; this exception is recorded in `evidence/browser-environment.json` and does not qualify as unflagged desktop acceptance.
+Temporary browser data uses a test-owned directory under the project root, removed by test teardown. This avoids the development container’s small `/tmp` mount. Only Chromium’s `TMPDIR`, which holds its singleton socket, goes in a short directory under the system temp folder: Unix socket paths are capped at 108 bytes, and a long checkout path would exceed that. The tests disable Chromium’s sandbox only when the harness runs as root; this exception is recorded in `evidence/browser-environment.json` and does not qualify as unflagged desktop acceptance.
+
+Browser tests need Bun 1.4.0 or later. Under Bun 1.3.14, Playwright’s pipe to the browser closes mid-suite, the browser exits and the remaining tests hang, so `tests/browser.test.ts` refuses to start on older versions.
 
 ### Dependencies and licences
 

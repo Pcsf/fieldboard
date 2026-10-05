@@ -11,9 +11,9 @@ export const swimlaneKinds = ["none", "assignee", "priority", "label", "epic"] a
 export type Swimlane = typeof swimlaneKinds[number];
 export interface Board { id: string; projectId: string; name: string; swimlane: Swimlane }
 export interface CardTemplate { id: string; name: string; description: string; subtasks: { title: string; position: number }[]; labelNames?: string[]; priority?: Priority }
-export interface BoardTemplateColumn { name: string; wipLimit: number | null; done: boolean }
+export interface BoardTemplateColumn { name: string; wipLimit: number | null; done: boolean; agingDays?: number | null }
 export interface BoardTemplate { id: string; name: string; columns: BoardTemplateColumn[] }
-export interface Column { id: string; boardId: string; name: string; position: number; wipLimit: number | null; done: boolean }
+export interface Column { id: string; boardId: string; name: string; position: number; wipLimit: number | null; done: boolean; agingDays?: number | null }
 export interface Subtask { id: string; title: string; done: boolean; position: number }
 export interface Comment { id: string; author: string; body: string; timestamp: string }
 export interface Attachment { id: string; name: string; type: string; data: string }
@@ -141,7 +141,7 @@ export function createCardFromTemplate(w: Workspace, columnId: string, templateI
 export function saveBoardTemplate(w: Workspace, boardId: string, name: string): BoardTemplate {
   required(w.boards.find(b => b.id === boardId), "Board");
   const columns = w.columns.filter(c => c.boardId === boardId).sort((a, b) => a.position - b.position);
-  const t: BoardTemplate = { id: id(), name: title(name), columns: columns.map(c => ({ name: c.name, wipLimit: c.wipLimit, done: c.done })) };
+  const t: BoardTemplate = { id: id(), name: title(name), columns: columns.map(c => ({ name: c.name, wipLimit: c.wipLimit, done: c.done, agingDays: c.agingDays })) };
   w.boardTemplates = [...(w.boardTemplates ?? []), t];
   return t;
 }
@@ -154,7 +154,7 @@ export function createBoardFromTemplate(w: Workspace, projectId: string, templat
   const template = required((w.boardTemplates ?? []).find(t => t.id === templateId), "Template");
   const board: Board = { id: id(), projectId: project.id, name: title(name), swimlane: "none" };
   w.boards.push(board);
-  template.columns.forEach((c, position) => w.columns.push({ id: id(), boardId: board.id, name: c.name, position, wipLimit: c.wipLimit, done: c.done }));
+  template.columns.forEach((c, position) => w.columns.push({ id: id(), boardId: board.id, name: c.name, position, wipLimit: c.wipLimit, done: c.done, agingDays: c.agingDays }));
   return board;
 }
 export function addMilestone(w: Workspace, projectId: string, name: string, date: string, description = ""): Milestone {
@@ -281,10 +281,16 @@ function checkedWipLimit(n: number | null): number | null {
   if (!Number.isInteger(n) || n < 1) throw new Error("WIP limit must be a positive whole number");
   return n;
 }
-export function updateColumn(w: Workspace, columnId: string, patch: Partial<Pick<Column, "name" | "done" | "wipLimit">>) {
+function checkedAgingDays(n: number | null | undefined): number | null | undefined {
+  if (n === null || n === undefined) return n;
+  if (!Number.isInteger(n) || n < 1) throw new Error("Aging threshold must be a positive whole number");
+  return n;
+}
+export function updateColumn(w: Workspace, columnId: string, patch: Partial<Pick<Column, "name" | "done" | "wipLimit" | "agingDays">>) {
   const column = required(w.columns.find(c => c.id === columnId), "Column");
   if (patch.name !== undefined) patch = { ...patch, name: title(patch.name) };
   if (patch.wipLimit !== undefined) patch = { ...patch, wipLimit: checkedWipLimit(patch.wipLimit) };
+  if (patch.agingDays !== undefined) patch = { ...patch, agingDays: checkedAgingDays(patch.agingDays) };
   mutation(w, "column edit", () => {
     Object.assign(column, patch);
     w.cards.filter(c => c.columnId === columnId).forEach(c => c.completedAt = column.done ? c.completedAt ?? now() : null);
@@ -390,12 +396,12 @@ export function validateWorkspace(input: unknown, clone = true): Workspace {
   });
   if (w.boardTemplates !== undefined) unique(arr(w.boardTemplates)).forEach(t => {
     str(t.name, true); const cols = arr(t.columns); if (!cols.length) fail("board template needs a column");
-    cols.forEach(cv => { const c = obj(cv); str(c.name, true); bool(c.done); if (c.wipLimit !== null) { integer(c.wipLimit); if ((c.wipLimit as number) < 1) fail("WIP limit must be positive"); } });
+    cols.forEach(cv => { const c = obj(cv); str(c.name, true); bool(c.done); if (c.wipLimit !== null) { integer(c.wipLimit); if ((c.wipLimit as number) < 1) fail("WIP limit must be positive"); } if (c.agingDays !== undefined && c.agingDays !== null) { integer(c.agingDays); if ((c.agingDays as number) < 1) fail("Aging threshold must be positive"); } });
   });
   const projects = unique(arr(w.projects)); projects.forEach(p => { if (p.planning !== undefined) validatePlanning(p.planning); if (p.milestones !== undefined) unique(arr(p.milestones)).forEach(m => { str(m.name, true); isoDate(m.date); str(m.description); }); str(p.name, true); str(p.description); color(p.color); if (!["active", "archived"].includes(p.status as string)) fail("invalid project status"); unique(arr(p.labels)).forEach(l => { str(l.name, true); color(l.color); }); });
   const boards = unique(arr(w.boards)); boards.forEach(b => { str(b.name, true); if (!projects.some(p => p.id === b.projectId)) fail("orphan board"); if (!swimlaneKinds.includes(b.swimlane as Swimlane)) fail("invalid swimlane"); });
   projects.forEach(p => { if (!boards.some(b => b.projectId === p.id)) fail("project needs a board"); });
-  const columns = unique(arr(w.columns)); columns.forEach(c => { str(c.name, true); integer(c.position); bool(c.done); if (c.wipLimit !== null) { integer(c.wipLimit); if ((c.wipLimit as number) < 1) fail("WIP limit must be positive"); } if (!boards.some(b => b.id === c.boardId)) fail("orphan column"); });
+  const columns = unique(arr(w.columns)); columns.forEach(c => { str(c.name, true); integer(c.position); bool(c.done); if (c.wipLimit !== null) { integer(c.wipLimit); if ((c.wipLimit as number) < 1) fail("WIP limit must be positive"); } if (c.agingDays !== undefined && c.agingDays !== null) { integer(c.agingDays); if ((c.agingDays as number) < 1) fail("Aging threshold must be positive"); } if (!boards.some(b => b.id === c.boardId)) fail("orphan column"); });
   boards.forEach(b => { const children = columns.filter(c => c.boardId === b.id); if (!children.length) fail("board needs a column"); positions(children as unknown as Column[]); });
   const cards = unique(arr(w.cards)); const cardsById = new Map(cards.map(c => [c.id as string, c])); cards.forEach(c => {
     checkCard(c); const col = columns.find(x => x.id === c.columnId); if (!col) return fail("orphan card");

@@ -1,0 +1,30 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/catalog-layout-browser.test.ts:
+37 |           const tallest = [...root.querySelectorAll<HTMLElement>("button, .catalog-kind")].map(e => ({ text: e.textContent!.trim(), h: e.getBoundingClientRect().height })).sort((a, b) => b.h - a.h)[0]!;
+38 |           const names = [...root.querySelectorAll<HTMLInputElement>(".sub-name")].map(i => ({ v: i.value, fits: i.scrollWidth <= i.clientWidth + 1 }));
+39 |           const modal = document.querySelector<HTMLElement>("#modal")!;
+40 |           return { overflow: root.scrollWidth - root.clientWidth, modalOverflow: modal.scrollWidth - modal.clientWidth, tallest, clipped: names.filter(n => !n.fits).map(n => n.v) };
+41 |         });
+42 |         expect([theme, width, "overflow", m.overflow <= 1, m.modalOverflow <= 1]).toEqual([theme, width, "overflow", true, true]);
+                                                                                       ^
+error: expect(received).toEqual(expected)
+
+@@ -4,4 +4,4 @@
+    "overflow",
+-   true,
+-   true,
++   false,
++   false,
+  ]
+
+- Expected  - 2
++ Received  + 2
+
+      at <anonymous> (<repo>/tests/catalog-layout-browser.test.ts:42:83)
+(fail) the IED catalog editor is readable: no sideways scroll, no letter-by-letter wrapping, full subcategory names [786.54ms]
+
+ 0 pass
+ 1 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [969.00ms]

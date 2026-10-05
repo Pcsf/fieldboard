@@ -7,3 +7,10 @@ Changes: stale DOM children removed before reordering (one insert per move inste
 per-render card index for epic/dependency badges (was a full card scan per card),
 indexed card lookups in validation, no extra deep copy before the IndexedDB put.
 Remaining time is mostly the strict-durability flush; the main thread is idle while it completes.
+
+Card aging follow-up: same 1,000-card move test, now with every column carrying an aging
+threshold and every card old enough to clear it, so cardHTML's aging lookup and badge markup run
+for all 1000 cards (tests/browser.test.ts "performance" test). Three consecutive full-suite runs,
+headless Chromium 152: commitMs 86.5, 87.7, 55.3 (budget stays <100). The aging lookup is an O(1)
+WeakMap-cached index extended incrementally from the activities length already processed, not a
+per-card scan of w.activities or w.cards, so it adds negligible per-card cost over the baseline above.

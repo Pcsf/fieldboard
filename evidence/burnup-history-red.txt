@@ -1,0 +1,21 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/burnup-browser.test.ts:
+130 |       betaChart.locator(".burnup-today-marker").evaluate(el => getComputedStyle(el).backgroundColor),
+131 |       betaChart.locator(".burnup-milestone-marker").evaluate(el => getComputedStyle(el).backgroundImage),
+132 |       betaLineDone.evaluate(el => getComputedStyle(el).stroke),
+133 |       betaLineScope.evaluate(el => getComputedStyle(el).stroke),
+134 |     ]);
+135 |     expect(todayBg).not.toBe(doneStroke);
+                              ^
+error: expect(received).not.toBe(expected)
+
+Expected: not "rgb(54, 92, 72)"
+
+      at <anonymous> (<repo>/tests/burnup-browser.test.ts:135:25)
+(fail) delivered milestone burnup: real multi-week history, two milestones, markers and legend distinct, readable in both themes at 1024 and 390 [6585.57ms]
+
+ 0 pass
+ 1 fail
+ 14 expect() calls
+Ran 1 test across 1 file. [6.82s]

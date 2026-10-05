@@ -1,0 +1,60 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/aging-browser.test.ts:
+65 | 
+66 |     expect(await noThreshold.locator(".aging-badge").count()).toBe(0);
+67 |     expect(await below.locator(".aging-badge").count()).toBe(0);
+68 |     expect(await doneOld.locator(".aging-badge").count()).toBe(0);
+69 | 
+70 |     expect(await at.locator(".aging-badge").textContent()).toBe("⏳ 7 d in column");
+                                                 ^
+TimeoutError: textContent: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'Open card: At threshold', exact: true }).locator('.aging-badge')[22m
+
+  log: [ "  - waiting for getByRole('button', { name: 'Open card: At threshold', exact: true }).locator('.aging-badge')" ],
+
+      at <repo>/tests/aging-browser.test.ts:70:45
+      at processTicksAndRejections (native:7:39)
+(fail) Aging: the card face shows its age only past threshold, amber then red, never in a done column, on board and swimlane views [8585.85ms]
+105 |   try {
+106 |     await page.goto(pathToFileURL(file).href); await saved();
+107 |     await page.getByRole("button", { name: "New project", exact: true }).click();
+108 |     await page.getByLabel("Project name", { exact: true }).fill("Aging"); await page.getByRole("button", { name: "Create project", exact: true }).click(); await saved();
+109 |     await page.getByRole("button", { name: "Edit column Backlog", exact: true }).click();
+110 |     await page.getByLabel("Aging threshold", { exact: true }).fill("5"); await page.getByLabel("Aging threshold", { exact: true }).press("Tab"); await saved();
+                                                                    ^
+TimeoutError: fill: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByLabel('Aging threshold', { exact: true })[22m
+
+  log: [ "  - waiting for getByLabel('Aging threshold', { exact: true })" ],
+
+      at <repo>/tests/aging-browser.test.ts:110:63
+      at processTicksAndRejections (native:7:39)
+(fail) Aging: the column settings dialog sets, validates and persists the threshold through reload [8584.59ms]
+
+ 0 pass
+ 2 fail
+ 6 expect() calls
+Ran 2 tests across 1 file. [17.47s]
+bun test v1.4.0 (34cbb9a40)
+
+tests/browser.test.ts:
+230 |   const fixture=await state();const template=fixture.cards[0];const columns=fixture.columns.slice().sort((a:any,b:any)=>a.position-b.position);
+231 |   // Every column carries a threshold, and every card is old enough to clear it, so the aging badge's
+232 |   // lookup and markup actually run for all 1000 cards rather than taking the "no threshold" early exit.
+233 |   columns.forEach((col:any)=>{col.agingDays=3});
+234 |   const old=new Date(Date.now()-5*86400000).toISOString();
+235 |   fixture.cards=Array.from({length:1000},(_,i)=>({...structuredClone(template),id:`perf-${i}`,title:`Performance card ${i}`,columnId:columns[i%columns.length].id,position:Math.floor(i/columns.length),createdAt:old,updatedAt:old,completedAt:columns[i%columns.length].done?old:null}));
+                                                                                                                                                             ^
+TypeError: undefined is not an object (evaluating 'columns[i % columns.length].id')
+      at <anonymous> (<repo>/tests/browser.test.ts:235:152)
+      at from (1:11)
+      at <anonymous> (<repo>/tests/browser.test.ts:235:23)
+(fail) performance: built file renders 1000 cards with aging thresholds on every column and measures local move acknowledgment [5.92ms]
+
+ 0 pass
+ 15 filtered out
+ 1 fail
+Ran 1 test across 1 file. [771.00ms]

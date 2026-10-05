@@ -226,16 +226,22 @@ test("actual localStorage quota exhaustion is visibly unsaved",async()=>{
   } finally {await c.close();}
 },30000);
 
-test("performance: built file renders 1000 cards and measures local move acknowledgment",async()=>{
+test("performance: built file renders 1000 cards with aging thresholds on every column and measures local move acknowledgment",async()=>{
   const fixture=await state();const template=fixture.cards[0];const columns=fixture.columns.slice().sort((a:any,b:any)=>a.position-b.position);
-  fixture.cards=Array.from({length:1000},(_,i)=>({...structuredClone(template),id:`perf-${i}`,title:`Performance card ${i}`,columnId:columns[i%columns.length].id,position:Math.floor(i/columns.length),completedAt:columns[i%columns.length].done?template.updatedAt:null}));
-  fixture.activities=fixture.cards.map((card:any)=>({id:`activity-${card.id}`,cardId:card.id,actor:fixture.settings.actorId,action:"create",before:null,after:structuredClone(card),timestamp:card.createdAt}));
+  // Every column carries a threshold, and every card is old enough to clear it, so the aging badge's
+  // lookup and markup actually run for all 1000 cards rather than taking the "no threshold" early exit.
+  columns.forEach((col:any)=>{col.agingDays=3});
+  const old=new Date(Date.now()-5*86400000).toISOString();
+  fixture.cards=Array.from({length:1000},(_,i)=>({...structuredClone(template),id:`perf-${i}`,title:`Performance card ${i}`,columnId:columns[i%columns.length].id,position:Math.floor(i/columns.length),createdAt:old,updatedAt:old,completedAt:columns[i%columns.length].done?old:null}));
+  fixture.activities=fixture.cards.map((card:any)=>({id:`activity-${card.id}`,cardId:card.id,actor:fixture.settings.actorId,action:"create",before:null,after:structuredClone(card),timestamp:old}));
   const fresh=await mkdtemp(join(temporaryRoot,"perf-"));const {c,p}=await launch(fresh);
   try {
     await Bun.write("evidence/1000-card-fixture.json",JSON.stringify(fixture));
     p.once("dialog",d=>d.accept());await p.getByLabel("Restore JSON backup").setInputFiles("evidence/1000-card-fixture.json");
     await p.waitForFunction(()=>document.querySelectorAll(".card").length===1000);await saved(p);
     expect(await p.locator(".card").count()).toBe(1000);
+    // Thresholds are "actually on": every non-done card is past 3 days, so the badge must be showing.
+    expect(await p.locator(".aging-badge").count()).toBeGreaterThan(0);
     await p.evaluate(()=>{
       const values={start:0,commitMs:0,feedbackMs:0};(window as any).__perf=values;
       document.addEventListener("drop",()=>values.start=performance.now(),true);
@@ -244,7 +250,7 @@ test("performance: built file renders 1000 cards and measures local move acknowl
     });
     await p.getByRole("button",{name:"Open card: Performance card 0",exact:true}).dragTo(p.locator(".column").nth(1).locator(".column-heading"));await saved(p);
     const metrics=await p.evaluate(()=>({...(window as any).__perf,userAgent:navigator.userAgent,cardCount:document.querySelectorAll(".card").length}));
-    await Bun.write("evidence/performance.json",JSON.stringify({...metrics,note:"Headless container measurement, not a mid-range laptop 60 fps certification."},null,2));
+    await Bun.write("evidence/performance.json",JSON.stringify({...metrics,note:"Headless container measurement, not a mid-range laptop 60 fps certification. Every column carries an aging threshold."},null,2));
     expect(metrics.commitMs).toBeGreaterThan(0);expect(metrics.commitMs).toBeLessThan(100);expect(metrics.feedbackMs).toBeLessThan(50);
   } finally {await c.close();}
 },30000);

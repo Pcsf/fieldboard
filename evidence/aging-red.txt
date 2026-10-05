@@ -1,0 +1,124 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/aging.test.ts:
+15 |   const { w, first } = fixture();
+16 |   updateColumn(w, first.id, { agingDays: 7 });
+17 |   expect(w.columns.find(c => c.id === first.id)!.agingDays).toBe(7);
+18 |   updateColumn(w, first.id, { agingDays: null });
+19 |   expect(w.columns.find(c => c.id === first.id)!.agingDays).toBeNull();
+20 |   expect(() => updateColumn(w, first.id, { agingDays: 0 })).toThrow();
+                                                                 ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: undefined
+
+      at <anonymous> (<repo>/tests/aging.test.ts:20:61)
+(fail) Aging: updateColumn accepts a positive integer or clears agingDays, and rejects zero/negative/non-integer [1.11ms]
+25 | 
+26 | test("Aging: structural validation rejects a zero or negative stored threshold", () => {
+27 |   const { w, first } = fixture();
+28 |   updateColumn(w, first.id, { agingDays: 5 });
+29 |   const bad = structuredClone(w); bad.columns.find(c => c.id === first.id)!.agingDays = 0;
+30 |   expect(() => validateWorkspace(bad)).toThrow();
+                                            ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: {
+  schemaVersion: 2,
+  revision: 0,
+  id: "0bc7955b-3a90-465c-8ffd-a239a4807e34",
+  name: "My workspace",
+  members: [
+    {
+      id: "ec2f9144-ae81-4d97-b55b-d4f46cafaee0",
+      name: "Me",
+      color: "#5169bc",
+    }
+  ],
+  settings: {
+    actorId: "ec2f9144-ae81-4d97-b55b-d4f46cafaee0",
+  },
+  projects: [
+    {
+      id: "5416930e-7925-46bb-b546-dda2018edfcd",
+      name: "Flow",
+      description: "",
+      color: "#667b68",
+      status: "active",
+      labels: [],
+    }
+  ],
+  boards: [
+    {
+      id: "3c53a326-e545-40ad-b37b-813b16f8abff",
+      projectId: "5416930e-7925-46bb-b546-dda2018edfcd",
+      name: "Board",
+      swimlane: "none",
+    }
+  ],
+  columns: [
+    {
+      id: "5f0ffc36-d6d8-433f-8c56-a1292f48c54c",
+      boardId: "3c53a326-e545-40ad-b37b-813b16f8abff",
+      name: "Backlog",
+      position: 0,
+      wipLimit: null,
+      done: false,
+      agingDays: 0,
+    }, {
+      id: "0350a5f3-cec2-4d4f-9fb8-083f12dcbcca",
+      boardId: "3c53a326-e545-40ad-b37b-813b16f8abff",
+      name: "To Do",
+      position: 1,
+      wipLimit: null,
+      done: false,
+    }, {
+      id: "fd76d08d-6dbb-4420-a7c6-0c5735afd638",
+      boardId: "3c53a326-e545-40ad-b37b-813b16f8abff",
+      name: "In Progress",
+      position: 2,
+      wipLimit: null,
+      done: false,
+    }, {
+      id: "1e3274dd-ea33-452a-8aa1-654b0f4c545e",
+      boardId: "3c53a326-e545-40ad-b37b-813b16f8abff",
+      name: "Review",
+      position: 3,
+      wipLimit: null,
+      done: false,
+    }, {
+      id: "16b26f3d-bacb-4403-91dc-6ef67ea91c50",
+      boardId: "3c53a326-e545-40ad-b37b-813b16f8abff",
+      name: "Done",
+      position: 4,
+      wipLimit: null,
+      done: true,
+    }
+  ],
+  cards: [],
+  activities: [],
+}
+
+      at <anonymous> (<repo>/tests/aging.test.ts:30:40)
+(fail) Aging: structural validation rejects a zero or negative stored threshold [1.14ms]
+34 | 
+35 | test("Aging: board templates capture and reproduce the threshold", () => {
+36 |   const { w, p, board, columns } = fixture();
+37 |   updateColumn(w, columns[0]!.id, { agingDays: 7 });
+38 |   const bt = saveBoardTemplate(w, board.id, "Standard flow");
+39 |   expect(bt.columns[0]!.agingDays).toBe(7);
+                                        ^
+error: expect(received).toBe(expected)
+
+Expected: 7
+Received: undefined
+
+      at <anonymous> (<repo>/tests/aging.test.ts:39:36)
+(fail) Aging: board templates capture and reproduce the threshold [0.34ms]
+
+ 8 pass
+ 3 fail
+ 15 expect() calls
+Ran 11 tests across 1 file. [15.00ms]

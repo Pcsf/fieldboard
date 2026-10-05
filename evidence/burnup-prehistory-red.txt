@@ -1,0 +1,25 @@
+
+- Expected  - 0
++ Received  + 20455
+
+      at <anonymous> (<repo>/tests/burnup.test.ts:176:35)
+(fail) burnup: a card whose history begins mid-life starts the series at its createdAt, not at the Unix epoch [34.92ms]
+182 |   const created = baseCard({ id: "a", createdAt: T(6), milestoneId: MS });
+183 |   const shifted = { ...created, position: 1 };
+184 |   w.cards = [shifted];
+185 |   w.activities = [activity("a", "create", null, created, T(6)), activity("a", "move", created, shifted, T(3))];
+186 |   const series = milestoneBurnup(w, MS, new Date(2026, 0, 7));
+187 |   expect(series[0]!.date >= D(3)).toBe(true);
+                                        ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (<repo>/tests/burnup.test.ts:187:35)
+(fail) burnup: an entry stamped before the card's create entry (clock skew) never stretches the series past the card's own dates [31.04ms]
+
+ 11 pass
+ 2 fail
+ 35 expect() calls
+Ran 13 tests across 1 file. [77.00ms]

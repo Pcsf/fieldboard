@@ -1,7 +1,7 @@
 ---
 phase: complete
-progress: 25/25
-principal_stated_goal: "start working on Tier 2 and bring the Polish one to the Tie 2 scope. I would like to have light/dark themes in the next release."
+progress: 32/33
+principal_stated_goal: "start working on /tmp/fieldboard-tier3-handoff.md"
 ---
 
 # Fieldboard implementation and verification contract
@@ -49,6 +49,31 @@ Every new field is an optional, additive schema-2 field, like the IED fields. Ex
 Not red-first, stated: browser tests for R10, R11, R14 and the pure-function tests of R12–R18 were written alongside or after their code; R09, R16, R17 and R18 browser tests were observed red first.
 
 Anti-claims: no claim closes on a test written after its feature was observed passing without saying so; no runtime network access or second file; no planning view writes a date the user did not set; no hand-edited dist output.
+
+## Release 3: milestone burnup and card aging
+
+Stated goal: *"start working on /tmp/fieldboard-tier3-handoff.md"* (2026-10-05). Asked to choose among the handoff's options, the principal picked **Burnup + aging** as the first Tier 3 batch and chose to let the two post-tag visual fixes (`562e416`, `1ac0741`) ride with this batch's release rather than cutting `v0.2.0-rc.2` now.
+
+Vision: two insight lenses from `PROMPT.md` § Tier 3 Insight that need no new history store. The append-only Activity log already holds a full before/after card snapshot for every card change, undo included (`audit()` in `src/model.ts`), so a milestone's past scope and progress can be rebuilt from it. Aging answers "what has been stuck?" on the board itself; burnup answers "is this milestone's scope growing faster than we finish it?" Both stay lenses: they read history, they never write it, and neither claims a delivery date.
+
+Out of scope for this batch: sprint burnup (sprints are numbered allocations without dates), IED-weighted burnup, cumulative flow, cycle/lead time, throughput, and every other Tier 3 item.
+
+| ID | Claim | Falsifier / probe | Status |
+|---|---|---|---|
+| R26 | A column can carry an optional aging threshold in whole days, set in column settings beside the WIP limit: a positive integer, or empty for off. It is validated like the WIP limit, kept by board templates, and absent on existing workspaces, which load unchanged | model tests: 0, −1, 1.5 and non-numbers rejected; template save/apply round trip; `tests/release-compat.test.ts` green; browser: set, reload, read back | Verified: `tests/aging.test.ts`, `tests/aging-browser.test.ts`, `tests/release-compat.test.ts` (red: `evidence/aging-red.txt`, `evidence/aging-browser-red.txt`); merge `5c86c11`, 236/236 |
+| R27 | A card's age is the whole days since it entered its current column: the latest Activity entry whose `after` is in that column and whose `before` is absent or in another column (create, move, board move, column delete, undo). A card with no such entry falls back to `createdAt`. Edits that leave the column unchanged never reset it | model tests on crafted Activity fixtures: edit keeps age, move out and back resets it, history-less card uses `createdAt` | Verified: `tests/aging.test.ts` (edit keeps age, move out and back, undo, `createdAt` fallback, incremental index equals full rebuild); `src/aging.ts` |
+| R28 | The card face shows its age only when its column has a threshold, the column is not a done column, and age ≥ threshold: amber from the threshold, red from twice the threshold. It renders on plain and swimlane boards, uses existing theme tokens, and reads at WCAG AA in both themes | browser with seeded old timestamps: badge presence, classes and text per case; screenshots viewed in light and dark at 1024 px | Verified: `tests/aging-browser.test.ts` (plain and swimlane, red: `evidence/aging-browser-red.txt`); amber 7 d and red 14 d/19 d badges viewed in light and dark on a four-week fixture at 1500 px |
+| R29 | Aging adds no per-card scan of the Activity log: column entry times come from one index extended incrementally as entries are appended. The 1,000-card move still commits in under 100 ms with thresholds on every column | code read of the index; `tests/browser.test.ts` performance with thresholds enabled | Verified: `agingIndex()` in `src/app.ts` extends from the last processed length; performance test with thresholds on every column and badges asserted rendering, 55–92 ms (red: `evidence/aging-performance-red.txt`) |
+| R30 | For each milestone, a daily burnup series runs from the first day any card carried it through today. Scope counts non-deleted cards assigned to it at the end of each day, archived included; done counts those of them in a done column. It is rebuilt from Activity snapshots, using `createdAt`/`completedAt` for cards with no history | model tests over fixture timelines: assign and unassign, archive, delete, undo, column done-flag toggle, card without history | Verified: `tests/burnup.test.ts` (red: `evidence/burnup-red.txt`); pre-history dated from `createdAt` after a 1970-start defect (red: `evidence/burnup-prehistory-red.txt`, fix `bd937e3`) |
+| R31 | Today's burnup point equals the milestone row's `done/total` for every milestone | model test across all fixtures; browser assertion against the rendered row | Verified: `tests/burnup.test.ts` today-point test; `tests/burnup-browser.test.ts` row assertion; four-week fixture shows 3/7 on both |
+| R32 | The milestone overview draws each milestone's burnup: scope and done lines, a labelled date axis, a count axis, a milestone-date marker, a today marker and a legend, plus a text summary for screen readers. It reads in both themes at 1024 px and at phone width | browser: chart data attributes match the series; screenshots viewed in light and dark at 1024 and 390 px | Verified: `tests/burnup-browser.test.ts` (red: `evidence/burnup-browser-red.txt`, `evidence/burnup-history-red.txt`); `evidence/burnup-{1024,390}-{light,dark}.png` viewed |
+| R33 | The release keeps every prior guarantee: single offline HTML, full suite green, existing workspaces load unchanged, and both features checked in real Brave with the test browser closed afterwards | `bun run build`, `bun test`, `tests/release-compat.test.ts`, Interceptor capture, `CloseTestProfile.sh` | **Partly.** Build, 250/250 tests and `tests/release-compat.test.ts` green at `bd937e3`. Real Brave: file load, threshold saved and read back after reload, milestone row and empty burnup state rendered; test browser closed. Aged cards and multi-week history could not be loaded in Brave (restore needs a native `confirm()` the browser-only Interceptor cannot accept), so those views were checked in headless Chromium only |
+
+Anti-claims: the burnup draws no projected, ideal or forecast line and states no completion date; no history field or store is added, since both features are derived; aging never writes to the workspace (only the threshold setting does); no card render scans all activities or all cards; no colour outside the theme tokens, and any new token lands in both byte-identical dark blocks with a contrast check.
+
+Learned: a card whose first Activity entry already had a `before` snapshot was dated to 1970, stretching its burnup across 56 years. Green suites missed it because every fixture began with a create entry; a fixture built for the real-browser check exposed it.
+
+Not yet specified: whether age should count working days instead of calendar days (calendar days for now); whether undoing a move should restore the card's earlier age (for now an undo counts as entering the column).
 
 ## Effort estimation integration
 

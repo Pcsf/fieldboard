@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/burnup-browser.test.ts:
+50 |     const row = page.locator(".milestone-row");
+51 |     const rowText = await row.textContent();
+52 |     expect(rowText).toContain("1/2 cards done");
+53 | 
+54 |     const chart = row.locator("[data-milestone-burnup]");
+55 |     await chart.waitFor();
+                     ^
+TimeoutError: waitFor: Timeout 6000ms exceeded.
+Call log:
+[2m  - waiting for locator('.milestone-row').locator('[data-milestone-burnup]') to be visible[22m
+
+  log: [ "  - waiting for locator('.milestone-row').locator('[data-milestone-burnup]') to be visible" ],
+
+      at <repo>/tests/burnup-browser.test.ts:55:17
+      at processTicksAndRejections (native:7:39)
+(fail) delivered milestone burnup: chart data matches the row, axis/markers render, readable in both themes at 1024 and 390 [7206.22ms]
+
+ 0 pass
+ 1 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [7.50s]

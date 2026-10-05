@@ -1,0 +1,47 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/select-options-browser.test.ts:
+33 |         const lum = (c: number[]) => { const [r, g, b] = c.slice(0, 3).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return .2126 * r! + .7152 * g! + .0722 * b!; };
+34 |         const ratio = (a: number[], b: number[]) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x! + .05) / (y! + .05); };
+35 |         return [...document.querySelectorAll("option")].map(o => { const s = getComputedStyle(o); const bg = rgb(s.backgroundColor); return { text: o.textContent, select: o.parentElement?.getAttribute("aria-label") ?? o.parentElement?.id, painted: bg.length >= 3 && (bg[3] ?? 1) > 0, ratio: ratio(rgb(s.color), bg) }; })
+36 |           .filter(o => !o.painted || o.ratio < 4.5).slice(0, 3);
+37 |       });
+38 |       expect([theme, bad]).toEqual([theme, []]);
+                                ^
+error: expect(received).toEqual(expected)
+
+@@ -2,3 +2,22 @@
+    "light",
+-   [],
++   [
++     {
++       "painted": false,
++       "ratio": 1.60164613756487,
++       "select": "Theme",
++       "text": "System",
++     },
++     {
++       "painted": false,
++       "ratio": 1.60164613756487,
++       "select": "Theme",
++       "text": "Light",
++     },
++     {
++       "painted": false,
++       "ratio": 1.60164613756487,
++       "select": "Theme",
++       "text": "Dark",
++     },
++   ],
+  ]
+
+- Expected  - 1
++ Received  + 20
+
+      at <anonymous> (<repo>/tests/select-options-browser.test.ts:38:28)
+(fail) dropdown options are readable in both themes: every option paints its own background with AA-contrast text [615.37ms]
+
+ 0 pass
+ 1 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [788.00ms]

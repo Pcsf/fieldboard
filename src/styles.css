@@ -347,10 +347,41 @@ footer span:last-child{display:none}
 .planning-table th,.planning-table td{padding:6px 3px}
 .viewbar-actions{flex-wrap:wrap;justify-content:flex-end}
 }
-.milestones-dialog{width:720px}.milestone-chip{display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--due-soon-text);background:var(--due-soon-bg);border:1px solid var(--line);padding:3px 6px;border-radius:4px;margin:0 0 8px}.milestone-row{border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:12px}.milestone-head{display:flex;gap:8px;margin-bottom:8px}.milestone-head .milestone-name{flex:1;font-weight:600}.milestone-head .milestone-date{width:140px}.milestone-row textarea{width:100%;min-height:44px;font-size:11px;margin-bottom:8px}.milestone-meta{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:8px}.milestone-verdict{font-weight:600;color:var(--accent)}.milestone-verdict.planning-warning{color:var(--planning-warning-text)}
+.milestones-dialog{width:720px}.milestone-chip{display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--due-soon-text);background:var(--due-soon-bg);border:1px solid var(--line);padding:3px 6px;border-radius:4px;margin:0 0 8px}.milestone-row{border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:12px}.milestone-head{display:flex;gap:8px;margin-bottom:8px}.milestone-head .milestone-name{flex:1;font-weight:600;min-width:0}.milestone-head .milestone-date{width:140px}.milestone-row textarea{width:100%;min-height:44px;font-size:11px;margin-bottom:8px}.milestone-meta{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:8px}.milestone-verdict{font-weight:600;color:var(--accent)}.milestone-verdict.planning-warning{color:var(--planning-warning-text)}
 .count.wip-at{background:var(--due-soon-bg);color:var(--due-soon-text)}.count.wip-over{background:var(--due-overdue-bg);color:var(--due-overdue-text)}
+@media(max-width:700px){.milestone-head{flex-wrap:wrap}.milestone-head .milestone-name{flex-basis:100%}.milestone-head .milestone-date{flex:1;width:auto}}
+.burnup-chart{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.burnup-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-bottom:6px}
+.burnup-legend-scope::before,.burnup-legend-done::before{content:"";display:inline-block;width:14px;height:0;border-top:2px solid;margin-right:4px;vertical-align:middle}
+.burnup-legend-scope::before{border-top-style:dashed;border-top-color:var(--muted)}
+.burnup-legend-done::before{border-top-color:var(--accent)}
+.burnup-legend-today::before,.burnup-legend-milestone::before{content:"";display:inline-block;width:0;height:11px;border-left:2px solid;margin-right:4px;vertical-align:middle}
+.burnup-legend-today::before{border-left-color:var(--text)}
+.burnup-legend-milestone::before{border-left-style:dashed;border-left-color:var(--due-soon-text)}
+.burnup-plot{position:relative;height:120px;margin-left:26px}
+.burnup-plot svg{width:100%;height:100%;display:block;overflow:visible}
+.burnup-line-scope{stroke:var(--muted);stroke-width:2;stroke-dasharray:6 4}
+.burnup-line-done{stroke:var(--accent);stroke-width:2}
+.burnup-dot{position:absolute;width:8px;height:8px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid var(--card-bg)}
+.burnup-dot-scope{background:var(--muted)}
+.burnup-dot-done{background:var(--accent)}
+/* Today and the milestone date are vertical rules distinct from both series and from each other:
+   a solid neutral line for today (never the colour either series uses) and a dashed amber line for
+   the milestone date (the same colour the milestone chip already carries elsewhere in the app). */
+.burnup-today-marker{position:absolute;top:0;bottom:0;width:2px;background:var(--text)}
+.burnup-milestone-marker{position:absolute;top:0;bottom:0;width:2px;background-image:repeating-linear-gradient(to bottom,var(--due-soon-text) 0 4px,transparent 4px 8px)}
+.burnup-yaxis{position:absolute;top:0;left:-26px;bottom:0;width:22px}
+.burnup-yaxis-tick{position:absolute;right:0;font-size:9px;color:var(--muted);transform:translateY(-50%);white-space:nowrap}
+.burnup-xaxis{position:relative;height:20px;margin-left:26px}
+.burnup-xaxis-tick{position:absolute;top:4px;font-size:9px;color:var(--muted);white-space:nowrap;transform:translateX(-50%)}
+.burnup-xaxis-tick:first-child{transform:none}
+.burnup-xaxis-tick:last-child{transform:translateX(-100%)}
+@media(max-width:700px){.burnup-plot{margin-left:22px}.burnup-yaxis{left:-22px;width:20px}.burnup-xaxis{margin-left:22px}.burnup-xaxis-tick{font-size:8px}}
 .blocked-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--blocked-text);background:var(--blocked-bg);border:1px solid var(--line);padding:3px 6px;border-radius:4px;margin:0 0 8px}
 .waiting-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--due-soon-text);background:var(--due-soon-bg);border:1px solid var(--line);padding:3px 6px;border-radius:4px;margin:0 0 8px}
+.aging-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;border:1px solid var(--line);padding:3px 6px;border-radius:4px;margin:0 0 8px}
+.aging-badge.soon{color:var(--due-soon-text);background:var(--due-soon-bg)}
+.aging-badge.overdue{color:var(--due-overdue-text);background:var(--due-overdue-bg)}
 .epic-chip{display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--chip-text);background:var(--chip-bg);border:1px solid var(--chip-border);padding:3px 6px;border-radius:4px;margin:0 0 8px}
 .epic-progress-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--meta-text);margin:0 0 8px}
 .mini-progress{flex:1;height:4px;border-radius:3px;background:var(--progress-track);overflow:hidden;display:block}
@@ -440,3 +471,21 @@ dialog.palette{width:560px;padding:0}
 .calendar-sidebar{width:100%}
 .timeline-scroll,.timeline-notscheduled{margin:0 16px 16px}
 }
+.catalog-list{display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.catalog-category{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.catalog-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.catalog-head .cat-name{flex:1 1 200px;min-width:0;font-weight:600}
+.catalog-kind{font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.catalog-base{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);white-space:nowrap}
+.catalog-base label,.catalog-factor{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.catalog-base input,.catalog-factor input{width:64px}
+.catalog-subs{display:flex;flex-direction:column;gap:6px;margin-top:10px;padding-left:12px;border-left:2px solid var(--line)}
+.catalog-sub{display:flex;align-items:center;gap:8px}
+.catalog-sub .sub-name,.catalog-sub .new-sub-name{flex:1;min-width:0}
+.catalog-factor{font-size:12px;color:var(--muted)}
+.catalog-category button,.catalog-add button{white-space:nowrap}
+.catalog-add{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
+.catalog-add #cat-add-name{flex:1 1 200px;min-width:0}
+.catalog-sub button{min-width:56px}
+/* Native dropdown popups take their colours from the option, not the page theme. */
+option,optgroup{background-color:var(--surface);color:var(--text)}

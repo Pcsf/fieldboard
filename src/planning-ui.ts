@@ -139,33 +139,32 @@ export function mountEffort(root: HTMLElement, cardId: string, hooks: PlanningHo
 function mountCatalog(root: HTMLElement, hooks: PlanningHooks, refresh: () => void) {
   const catalog = effectiveCatalog(hooks.state());
   root.innerHTML = `<h3>IED catalog</h3><p>A category sets the base RTL/verification IED, or an unsplit range for lab and debug work; a subcategory's factor scales that base for the specific case. Edits apply to this workspace only; the built-in defaults are never changed in place.</p>
-  <table class="planning-table"><thead><tr><th>Category</th><th>Kind</th><th>Base IED</th><th>Subcategories · factor</th><th></th></tr></thead><tbody>
-  ${catalog.map(c => `<tr data-category="${esc(c.id)}">
-    <td><input class="cat-name" aria-label="Category name: ${esc(c.name)}" value="${esc(c.name)}"></td>
-    <td>${esc(c.kind)}</td>
-    <td>${c.other
-      ? `<input class="cat-other-0" type="number" min="0" step="any" aria-label="${esc(c.name)} minimum IED" value="${c.other[0]}"> – <input class="cat-other-1" type="number" min="0" step="any" aria-label="${esc(c.name)} maximum IED" value="${c.other[1]}">`
-      : `<input class="cat-rtl" type="number" min="0" step="any" aria-label="${esc(c.name)} RTL IED" value="${c.rtl}"> RTL / <input class="cat-verification" type="number" min="0" step="any" aria-label="${esc(c.name)} verification IED" value="${c.verification}"> Verif`}
-    </td>
-    <td>${c.subcategories.map(s => `<div data-subcategory="${esc(s.id)}" class="form-row">
-      <input class="sub-name" aria-label="Subcategory name: ${esc(s.name)}" value="${esc(s.name)}">
-      <input class="sub-factor" type="number" min="0.01" max="10" step="any" aria-label="Subcategory factor: ${esc(s.name)}" value="${s.factor}">
+  <div class="catalog-list">${catalog.map(c => `<section class="catalog-category" data-category="${esc(c.id)}">
+    <div class="catalog-head">
+      <input class="cat-name" aria-label="Category name: ${esc(c.name)}" value="${esc(c.name)}">
+      <span class="catalog-kind">${c.kind === "lab" ? "Lab" : "Design"}</span>
+      <span class="catalog-base">${c.other
+        ? `<label>Min <input class="cat-other-0" type="number" min="0" step="any" aria-label="${esc(c.name)} minimum IED" value="${c.other[0]}"></label><label>Max <input class="cat-other-1" type="number" min="0" step="any" aria-label="${esc(c.name)} maximum IED" value="${c.other[1]}"></label> IED`
+        : `<label>RTL <input class="cat-rtl" type="number" min="0" step="any" aria-label="${esc(c.name)} RTL IED" value="${c.rtl}"></label><label>Verif <input class="cat-verification" type="number" min="0" step="any" aria-label="${esc(c.name)} verification IED" value="${c.verification}"></label> IED`}</span>
+      <button type="button" class="danger cat-delete" aria-label="Delete category ${esc(c.name)}">Delete</button>
+    </div>
+    <div class="catalog-subs">${c.subcategories.map(s => `<div data-subcategory="${esc(s.id)}" class="catalog-sub">
+      <input class="sub-name" title="${esc(s.name)}" aria-label="Subcategory name: ${esc(s.name)}" value="${esc(s.name)}">
+      <label class="catalog-factor">× <input class="sub-factor" type="number" min="0.01" max="10" step="any" aria-label="Subcategory factor: ${esc(s.name)}" value="${s.factor}"></label>
       <button type="button" class="danger sub-delete" aria-label="Delete subcategory ${esc(s.name)}">×</button></div>`).join("")}
-      <form class="sub-add form-row"><input class="new-sub-name" placeholder="New subcategory" aria-label="New subcategory name for ${esc(c.name)}" required><input class="new-sub-factor" type="number" min="0.01" max="10" step="any" value="1" aria-label="New subcategory factor for ${esc(c.name)}"><button type="submit">Add</button></form>
-    </td>
-    <td><button type="button" class="danger cat-delete" aria-label="Delete category ${esc(c.name)}">Delete category</button></td>
-  </tr>`).join("")}
-  </tbody></table>
-  <form id="category-add-form" class="form-row">
+      <form class="sub-add catalog-sub"><input class="new-sub-name" placeholder="New subcategory" aria-label="New subcategory name for ${esc(c.name)}" required><label class="catalog-factor">× <input class="new-sub-factor" type="number" min="0.01" max="10" step="any" value="1" aria-label="New subcategory factor for ${esc(c.name)}"></label><button type="submit">Add</button></form>
+    </div>
+  </section>`).join("")}</div>
+  <form id="category-add-form" class="catalog-add">
     <input id="cat-add-name" placeholder="New category name" aria-label="New category name" required>
     <select id="cat-add-kind" aria-label="New category kind"><option value="design">Design</option><option value="lab">Lab</option></select>
     <select id="cat-add-shape" aria-label="New category shape"><option value="split">Split RTL / verification</option><option value="unsplit">Unsplit range</option></select>
-    <input id="cat-add-rtl" type="number" min="0" step="any" value="0" aria-label="New category RTL IED (split shape)">
-    <input id="cat-add-verification" type="number" min="0" step="any" value="0" aria-label="New category verification IED (split shape)">
-    <input id="cat-add-min" type="number" min="0" step="any" value="0" aria-label="New category minimum IED (unsplit shape)">
-    <input id="cat-add-max" type="number" min="0" step="any" value="0" aria-label="New category maximum IED (unsplit shape)">
+    <span class="catalog-base" data-shape="split"><label>RTL <input id="cat-add-rtl" type="number" min="0" step="any" value="0" aria-label="New category RTL IED (split shape)"></label><label>Verif <input id="cat-add-verification" type="number" min="0" step="any" value="0" aria-label="New category verification IED (split shape)"></label></span>
+    <span class="catalog-base" data-shape="unsplit" hidden><label>Min <input id="cat-add-min" type="number" min="0" step="any" value="0" aria-label="New category minimum IED (unsplit shape)"></label><label>Max <input id="cat-add-max" type="number" min="0" step="any" value="0" aria-label="New category maximum IED (unsplit shape)"></label></span>
     <button type="submit">Add category</button>
-  </form><p class="muted">Split shape fills RTL and verification; unsplit shape fills the minimum/maximum range instead. Fill only the pair matching the chosen shape; the new category starts with one "Default" subcategory at factor 1.</p>`;
+  </form><p class="muted">A new category starts with one "Default" subcategory at factor 1.</p>`;
+  const shape = root.querySelector<HTMLSelectElement>("#cat-add-shape")!;
+  shape.onchange = () => root.querySelectorAll<HTMLElement>("#category-add-form [data-shape]").forEach(el => el.hidden = el.dataset.shape !== shape.value);
   for (const row of root.querySelectorAll<HTMLElement>("[data-category]")) {
     const categoryId = row.dataset.category!;
     row.querySelector<HTMLInputElement>(".cat-name")!.onchange = e => { if (hooks.stage(w => editCategory(w, categoryId, { name: (e.target as HTMLInputElement).value }))) refresh(); };

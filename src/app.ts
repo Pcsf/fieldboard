@@ -1,4 +1,5 @@
-import { createProject, createCard, editCard, moveCard, moveCardInLane, archiveCard, deleteCard, addColumn, updateColumn, reorderColumn, deleteColumn, orderedCards, resolveLabels, priorities, swimlaneKinds, setBoardSwimlane, matches, dueState, emptyFilters, encodeFilters, decodeFilters, migrateWorkspace, id, setBlocked, children, epicProgress, waitingOn, blocks, createCardFromTemplate, saveCardTemplate, deleteCardTemplate, moveCardToBoard, type Card, type CardEdit, type Column, type Workspace, type Filters, type Theme, type Swimlane } from "./model";
+import { createProject, createCard, editCard, moveCard, moveCardInLane, archiveCard, deleteCard, addColumn, updateColumn, reorderColumn, deleteColumn, orderedCards, resolveLabels, priorities, swimlaneKinds, setBoardSwimlane, matches, dueState, emptyFilters, encodeFilters, decodeFilters, migrateWorkspace, id, setBlocked, children, epicProgress, waitingOn, blocks, createCardFromTemplate, saveCardTemplate, deleteCardTemplate, moveCardToBoard, type Card, type CardEdit, type Column, type Workspace, type Filters, type Theme, type Swimlane, type Activity } from "./model";
+import { extendColumnEntryIndex, cardAgeDays, type ColumnEntry } from "./aging";
 import { Storage, Session, DraftJournal } from "./storage";
 import { escapeHTML as esc, markdown } from "./markdown";
 import { mountEffort, mountPlanning, effortBadge, type PlanningHooks } from "./planning-ui";
@@ -47,6 +48,13 @@ function cardIndex(w: Workspace) {
     index = { byId: new Map(w.cards.map(c => [c.id, c])), children }; cardIndexes.set(w.cards, index);
   }
   return index;
+}
+const agingCaches = new WeakMap<Activity[], { length: number; index: Map<string, ColumnEntry> }>();
+function agingIndex(w: Workspace) {
+  let cache = agingCaches.get(w.activities);
+  if (!cache) { cache = { length: 0, index: new Map() }; agingCaches.set(w.activities, cache); }
+  if (cache.length < w.activities.length) { extendColumnEntryIndex(cache.index, w.activities, cache.length); cache.length = w.activities.length; }
+  return cache.index;
 }
 const status = $("#storage-status");
 function message(error: unknown) { if (session) session.report(error); else { status.textContent = "Not saved · storage unavailable"; $("#error-banner").hidden = false; $("#error-message").textContent = String(error); } }
@@ -205,14 +213,22 @@ function epicProgressRow(card: Card): string {
   const pct = Math.round(done / total * 100);
   return `<div class="epic-progress-row" title="${done}/${total} child cards done"><span>⛩ ${done}/${total}</span><span class="mini-progress"><i style="width:${pct}%"></i></span></div>`;
 }
-function cardHTML(card: Card): string {
+function agingBadge(card: Card, column: Column): string {
+  if (column.agingDays == null || column.done) return "";
+  const age = cardAgeDays(card, agingIndex(session.state));
+  if (age < column.agingDays) return "";
+  const cls = age >= column.agingDays * 2 ? "overdue" : "soon";
+  const title = esc(`${age} days in ${column.name}; flagged after ${column.agingDays}`);
+  return `<span class="aging-badge ${cls}" title="${title}">⏳ ${age} d in column</span>`;
+}
+function cardHTML(card: Card, column: Column): string {
   const project = activeProject();
   const labels = card.labels.map(id => project?.labels.find(l => l.id === id)).filter(l => !!l);
   const members = card.assignees.map(id => session.state.members.find(m => m.id === id)).filter(m => !!m);
   return `<button class="card${selected.has(card.id) ? " selected" : ""}" draggable="true" data-card="${esc(card.id)}" aria-label="Open card: ${esc(card.title)}" aria-pressed="${selected.has(card.id)}">
     <div class="card-labels">${labels.map(l => `<span class="label-chip"><i style="background:${l.color}"></i>${esc(l.name)}</span>`).join("")}</div>
     <div class="card-title">${esc(card.title)}</div>${effortBadge(card)}${milestoneChip(card, project?.milestones)}${epicChip(card)}
-    ${blockedBadge(card)}${waitingBadge(card)}${epicProgressRow(card)}
+    ${blockedBadge(card)}${waitingBadge(card)}${agingBadge(card, column)}${epicProgressRow(card)}
     <div class="card-meta">${card.priority !== "none" ? `<span class="priority ${card.priority}" title="${card.priority} priority">${card.priority === "urgent" ? "!!" : "↑"} ${card.priority}</span>` : ""}
     ${card.dueDate ? `<span class="due ${dueState(card)}" title="Due ${esc(card.dueDate)}">◷ ${shortDue(card.dueDate)}</span>` : ""}
     ${card.subtasks.length ? `<span title="Subtasks completed">☑ ${card.subtasks.filter(s => s.done).length}/${card.subtasks.length}</span>` : ""}
@@ -262,7 +278,7 @@ function renderPlainBoard(columns: Column[], w: Workspace, visible: Card[]) {
     const count = $(".count", element); if (count.textContent !== wipText) count.textContent = wipText;
     if (count.className !== `count ${wipClass}`.trim()) count.className = `count ${wipClass}`.trim();
     const cardNodes = items.map(card => {
-      const markup = cardHTML(card); const old = previousCards.get(card.id);
+      const markup = cardHTML(card, col); const old = previousCards.get(card.id);
       if (old && cardMarkup.get(old) === markup) return old;
       const template = document.createElement("template"); template.innerHTML = markup;
       const node = template.content.firstElementChild as HTMLElement; cardMarkup.set(node, markup); return node;
@@ -309,7 +325,7 @@ function renderSwimlaneBoard(columns: Column[], w: Workspace, visible: Card[], s
   }).join("")}`;
   const body = lanes.map(lane => `<div class="lane-label" data-lane="${esc(lane.id)}">${esc(lane.label)}</div>${columns.map(col => {
     const items = laneCards(visible, col.id, lane.id, swimlane);
-    return `<div class="swimlane-cell" data-lane="${esc(lane.id)}" data-column="${esc(col.id)}">${items.map(cardHTML).join("") || '<div class="empty-column">—</div>'}</div>`;
+    return `<div class="swimlane-cell" data-lane="${esc(lane.id)}" data-column="${esc(col.id)}">${items.map(c => cardHTML(c, col)).join("") || '<div class="empty-column">—</div>'}</div>`;
   }).join("")}`).join("");
   boardElement.innerHTML = `<div class="swimlane-grid" style="grid-template-columns:140px repeat(${columns.length},minmax(220px,1fr))">${head}${body}</div>`;
   boardElement.querySelectorAll<HTMLElement>(".swimlane-cell").forEach(cell => {
@@ -417,23 +433,25 @@ function projectSettings() {
 }
 function columnDialog(columnId?: string) {
   const col = session.state.columns.find(c => c.id === columnId); const columns = boardColumns();
-  showModal(col ? "Column settings" : "Add a column", `<form id="column-form"><label class="form-field"><span>Column name</span><input id="column-name-input" aria-label="Column name" value="${esc(col?.name ?? "")}" required autofocus></label><label class="checkbox-label"><input id="column-done-input" type="checkbox" ${col?.done ? "checked" : ""}>Cards here are done</label><label class="form-field"><span>WIP limit</span><input id="column-wip-input" aria-label="WIP limit" type="number" min="1" step="1" placeholder="No limit" value="${col?.wipLimit ?? ""}"></label><small>Counts non-archived cards. Exceeding the limit is allowed; the header turns amber at the limit and red above it.</small>${col ? '<small>Changes save automatically.</small>' : '<div class="dialog-actions"><button type="submit" class="primary">Create column</button></div>'}</form>${col ? `<hr><div class="form-row"><button id="column-left" aria-label="Move column left">← Move left</button><button id="column-right" aria-label="Move column right">Move right →</button></div><p>Deleting this column also moves its archived cards. Choose a destination first.</p><label class="form-field"><span>Move cards to</span><select id="column-destination" aria-label="Column deletion destination">${option("", "Choose a destination")}${columns.filter(c => c.id !== col.id).map(c => option(c.id, c.name)).join("")}</select></label><button id="delete-column" class="danger">Delete column</button>` : ""}`);
+  showModal(col ? "Column settings" : "Add a column", `<form id="column-form"><label class="form-field"><span>Column name</span><input id="column-name-input" aria-label="Column name" value="${esc(col?.name ?? "")}" required autofocus></label><label class="checkbox-label"><input id="column-done-input" type="checkbox" ${col?.done ? "checked" : ""}>Cards here are done</label><label class="form-field"><span>WIP limit</span><input id="column-wip-input" aria-label="WIP limit" type="number" min="1" step="1" placeholder="No limit" value="${col?.wipLimit ?? ""}"></label><small>Counts non-archived cards. Exceeding the limit is allowed; the header turns amber at the limit and red above it.</small><label class="form-field"><span>Aging threshold · days</span><input id="column-aging-input" aria-label="Aging threshold" type="number" min="1" step="1" placeholder="Off" value="${col?.agingDays ?? ""}"></label><small>Shows how long a card has sat here once it clears this many days; never shown in a done column.</small>${col ? '<small>Changes save automatically.</small>' : '<div class="dialog-actions"><button type="submit" class="primary">Create column</button></div>'}</form>${col ? `<hr><div class="form-row"><button id="column-left" aria-label="Move column left">← Move left</button><button id="column-right" aria-label="Move column right">Move right →</button></div><p>Deleting this column also moves its archived cards. Choose a destination first.</p><label class="form-field"><span>Move cards to</span><select id="column-destination" aria-label="Column deletion destination">${option("", "Choose a destination")}${columns.filter(c => c.id !== col.id).map(c => option(c.id, c.name)).join("")}</select></label><button id="delete-column" class="danger">Delete column</button>` : ""}`);
   const input = $<HTMLInputElement>("#column-name-input"); const key = `column:${columnId ?? "new"}`; fieldDraft(input, key);
   const wipValue = () => { const raw = $<HTMLInputElement>("#column-wip-input").value; return raw === "" ? null : Number(raw); };
+  const agingValue = () => { const raw = $<HTMLInputElement>("#column-aging-input").value; return raw === "" ? null : Number(raw); };
   $<HTMLFormElement>("#column-form").onsubmit = e => {
     e.preventDefault(); const value = input.value; if (!retain(key, value)) return;
-    const done = $<HTMLInputElement>("#column-done-input").checked; const wipLimit = wipValue();
-    if (stage(w => { if (col) updateColumn(w, col.id, { name: value, done, wipLimit }); else { const created = addColumn(w, currentBoard()!.id, value); updateColumn(w, created.id, { done, wipLimit }); } })) { modal.close(); void clearDraft(key, value); }
+    const done = $<HTMLInputElement>("#column-done-input").checked; const wipLimit = wipValue(); const agingDays = agingValue();
+    if (stage(w => { if (col) updateColumn(w, col.id, { name: value, done, wipLimit, agingDays }); else { const created = addColumn(w, currentBoard()!.id, value); updateColumn(w, created.id, { done, wipLimit, agingDays }); } })) { modal.close(); void clearDraft(key, value); }
   };
   if (col) {
     const autosave = () => {
       const value = input.value; if (!retain(key, value)) return;
-      if (stage(w => updateColumn(w, col.id, { name: value, done: $<HTMLInputElement>("#column-done-input").checked, wipLimit: wipValue() }))) { fieldErrors.delete(key); updateStatus(); void clearDraft(key, value); }
+      if (stage(w => updateColumn(w, col.id, { name: value, done: $<HTMLInputElement>("#column-done-input").checked, wipLimit: wipValue(), agingDays: agingValue() }))) { fieldErrors.delete(key); updateStatus(); void clearDraft(key, value); }
       else { fieldErrors.set(key, session.error); updateStatus(); }
     };
     input.addEventListener("input", autosave);
     $<HTMLInputElement>("#column-done-input").onchange = autosave;
     $<HTMLInputElement>("#column-wip-input").onchange = autosave;
+    $<HTMLInputElement>("#column-aging-input").onchange = autosave;
     $("#column-left").onclick = () => { stage(w => reorderColumn(w, col.id, Math.max(0, session.state.columns.find(c => c.id === col.id)!.position - 1))); };
     $("#column-right").onclick = () => { stage(w => reorderColumn(w, col.id, session.state.columns.find(c => c.id === col.id)!.position + 1)); };
     $("#delete-column").onclick = () => {

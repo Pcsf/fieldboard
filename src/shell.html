@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-__SCRIPT_HASH__'; style-src 'unsafe-inline'; img-src 'none'; font-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<meta name="color-scheme" content="light">
+<meta name="color-scheme" content="light dark">
 <title>Fieldboard · Local workspace</title>
 <style>__CSS__</style>
 </head>
@@ -13,10 +13,13 @@
   <aside class="sidebar">
     <a class="brand" href="#" aria-label="Fieldboard home"><span class="brand-mark" aria-hidden="true">▥</span> fieldboard<span class="brand-dot">.</span></a>
     <div class="workspace-tag"><span class="workspace-avatar">W</span><div><strong id="workspace-name">My workspace</strong><small>LOCAL WORKSPACE</small></div></div>
+    <button class="my-work-button" id="my-work-button" aria-label="My work">✦ &nbsp; My work</button>
     <div class="sidebar-heading">PROJECTS <button id="new-project-small" aria-label="Add project">+</button></div>
     <nav id="projects" aria-label="Projects"></nav>
     <button class="new-project subtle" id="new-project" aria-label="New project">+ New project</button>
-    <div class="sidebar-bottom">
+    <button id="menu-toggle" class="menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="sidebar-menu">☰ Menu</button>
+    <div class="sidebar-bottom" id="sidebar-menu">
+      <label class="theme-switcher" for="theme-select"><span>Theme</span><select id="theme-select" aria-label="Theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
       <button id="members-button">◎ &nbsp; Workspace & members</button>
       <button id="snapshots-button">◷ &nbsp; Daily snapshots</button>
       <button id="backup-button" aria-label="Download backup">↓ &nbsp; Download backup</button>
@@ -26,20 +29,39 @@
     </div>
   </aside>
   <main>
-    <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <strong id="breadcrumb-project">Overview</strong></div><div class="topbar-right"><span data-testid="storage-status" id="storage-status" role="status" aria-live="polite">Opening storage…</span><button id="undo-button" title="Undo (Ctrl+Z)">↶ Undo</button><span class="user-avatar" title="Local identity">ME</span></div></header>
+    <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <strong id="breadcrumb-project">Overview</strong></div><div class="topbar-right"><span data-testid="storage-status" id="storage-status" role="status" aria-live="polite">Opening storage…</span><button id="palette-button" title="Command palette (Ctrl+K)">⌘K</button><button id="undo-button" title="Undo (Ctrl+Z)">↶ Undo</button><span class="user-avatar" title="Local identity">ME</span></div></header>
     <div id="error-banner" role="alert" hidden><strong>Not saved.</strong> <span id="error-message"></span><button id="retry-button">Retry write</button><button id="draft-button">Download drafts</button><span>Keep this tab open if draft storage is also denied.</span></div>
     <section class="page-heading"><div><div class="eyebrow">A LITTLE CLARITY FOR YOUR DAY</div><h1 id="project-title">Your work, in view.</h1><p id="project-description">A quiet place to turn plans into progress.</p></div><button id="project-settings" class="subtle" hidden>Project settings</button></section>
     <div id="board-tools" hidden>
-      <div class="viewbar"><div class="active-view">▥ &nbsp; Board <span id="total-count" class="count">0</span></div><div class="viewbar-actions"><button id="planning-button">Effort &amp; planning</button><button id="archive-button">Archive</button><button id="add-column" class="primary">+ Add column</button></div></div>
-      <div class="filters"><label class="search"><span aria-hidden="true">⌕</span><input id="search" placeholder="Search cards" aria-label="Search cards"><kbd>/</kbd></label><select id="filter-label" aria-label="Filter label"><option value="">All labels</option></select><select id="filter-assignee" aria-label="Filter assignee"><option value="">All assignees</option></select><select id="filter-priority" aria-label="Filter priority"><option value="">All priorities</option><option>none</option><option>low</option><option>medium</option><option>high</option><option>urgent</option></select><select id="filter-due" aria-label="Filter due state"><option value="">Any due date</option><option value="overdue">Overdue</option><option value="week">Due this week</option><option value="none">No date</option></select><button id="clear-filters" class="subtle">Clear filters</button></div>
+      <div class="viewbar"><div class="view-tabs" role="tablist" aria-label="View"><button type="button" class="view-tab active" data-view="board" aria-pressed="true">Board</button><button type="button" class="view-tab" data-view="list" aria-pressed="false">List</button><button type="button" class="view-tab" data-view="calendar" aria-pressed="false">Calendar</button><button type="button" class="view-tab" data-view="timeline" aria-pressed="false">Timeline</button></div><div class="active-view"><select id="board-select" aria-label="Select board" class="board-select"></select> <select id="swimlane-select" aria-label="Group board by"><option value="none">No swimlanes</option><option value="assignee">Assignee</option><option value="priority">Priority</option><option value="label">Label</option><option value="epic">Epic</option></select> <span id="total-count" class="count">0</span></div><div class="viewbar-actions"><button id="boards-button">Boards</button><button id="milestones-button">Milestones</button><button id="sprints-button">Sprints</button><button id="planning-button">Effort &amp; planning</button><button id="archive-button">Archive</button><button id="add-column" class="primary">+ Add column</button></div></div>
+      <div class="filters"><label class="search"><span aria-hidden="true">⌕</span><input id="search" placeholder="Search cards" aria-label="Search cards"><kbd>/</kbd></label><select id="filter-label" aria-label="Filter label"><option value="">All labels</option></select><select id="filter-assignee" aria-label="Filter assignee"><option value="">All assignees</option></select><select id="filter-priority" aria-label="Filter priority"><option value="">All priorities</option><option>none</option><option>low</option><option>medium</option><option>high</option><option>urgent</option></select><select id="filter-due" aria-label="Filter due state"><option value="">Any due date</option><option value="overdue">Overdue</option><option value="week">Due this week</option><option value="none">No date</option></select><select id="filter-milestone" aria-label="Filter milestone"><option value="">All milestones</option></select><select id="filter-blocked" aria-label="Filter blocked"><option value="">All cards</option><option value="yes">Blocked</option></select><select id="filter-epic" aria-label="Filter epic"><option value="">All epics</option></select><button id="clear-filters" class="subtle">Clear filters</button></div>
+      <div id="bulk-bar" class="bulk-bar" role="toolbar" aria-label="Bulk actions" hidden>
+        <span id="bulk-count">0 selected</span>
+        <select id="bulk-move" aria-label="Move selected cards to column"><option value="">Move to…</option></select>
+        <select id="bulk-label" aria-label="Add label to selected cards"><option value="">Add label…</option></select>
+        <select id="bulk-remove-label" aria-label="Remove label from selected cards"><option value="">Remove label…</option></select>
+        <select id="bulk-assign" aria-label="Assign selected cards to member"><option value="">Assign…</option></select>
+        <select id="bulk-unassign" aria-label="Unassign selected cards from member"><option value="">Unassign…</option></select>
+        <button id="bulk-archive">Archive</button>
+        <button id="bulk-clear" class="subtle" aria-label="Clear selection">Clear selection</button>
+      </div>
     </div>
     <section id="board" class="board" aria-label="Kanban board"></section>
+    <section id="list-view" class="list-view" aria-label="Card list" hidden></section>
+    <section id="calendar-view" class="calendar-view" aria-label="Calendar view" hidden></section>
+    <section id="timeline-view" class="timeline-view" aria-label="Timeline view" hidden></section>
     <section id="welcome" class="welcome"><div class="welcome-illustration" aria-hidden="true"><i></i><i></i><i></i></div><div class="eyebrow">START WITH SOMETHING SMALL</div><h2>Make room for your next idea.</h2><p>Create a project, add a card, and move it forward.<br>Your work stays in this browser, even offline.</p><button id="welcome-create" class="primary">+ Create your first project</button><small>One file for the app. A backup for your work.</small></section>
     <footer><span id="board-summary">Ready when you are.</span><span>LOCAL-FIRST · FIELD BOARD 01</span></footer>
   </main>
 </div>
 <dialog id="modal" aria-label="Workspace dialog"></dialog>
 <dialog id="detail" aria-label="Card details"></dialog>
+<dialog id="palette" class="palette" aria-label="Command palette">
+  <div class="palette-box">
+    <input id="palette-input" aria-label="Command palette search" placeholder="Search projects, boards, cards and actions…" autocomplete="off">
+    <ul id="palette-results" role="listbox" aria-label="Command palette results"></ul>
+  </div>
+</dialog>
 <noscript>Fieldboard requires JavaScript and persistent browser storage. Nothing is saved while JavaScript is disabled.</noscript>
 <script>__JS__</script>
 </body>

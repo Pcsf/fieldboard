@@ -1,0 +1,22 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/model.test.ts:
+140 | test("calendar-invalid dates are rejected as invalid workspace data, not as a runtime RangeError", () => {
+141 |   const w = createWorkspace(); const p = createProject(w, "Dates");
+142 |   const col = w.columns.find(c => c.boardId === w.boards.find(b => b.projectId === p.id)!.id)!;
+143 |   const c = createCard(w, col.id, "Card", "bottom");
+144 |   const bad = structuredClone(w); bad.cards.find(x => x.id === c.id)!.dueDate = "2026-13-40";
+145 |   expect(() => validateWorkspace(bad)).toThrow(/^Invalid workspace: invalid due date$/);
+                                             ^
+error: expect(received).toThrow(expected)
+
+Expected pattern: /^Invalid workspace: invalid due date$/
+Received message: "Invalid Date"
+
+      at <anonymous> (<repo>/tests/model.test.ts:145:40)
+(fail) calendar-invalid dates are rejected as invalid workspace data, not as a runtime RangeError [0.35ms]
+
+ 12 pass
+ 1 fail
+ 62 expect() calls
+Ran 13 tests across 1 file. [16.00ms]

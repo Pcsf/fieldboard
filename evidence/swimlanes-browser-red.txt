@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/swimlanes-browser.test.ts:
+33 |     await page.getByPlaceholder("Card title").fill("Design review"); await page.getByPlaceholder("Card title").press("Enter"); await saved(page);
+34 |     await page.getByRole("button", { name: "Open card: Design review", exact: true }).click();
+35 |     await page.getByLabel("Assign to Me", { exact: true }).check(); await saved(page);
+36 |     await page.getByRole("button", { name: "Close card", exact: true }).click();
+37 | 
+38 |     await page.getByLabel("Group board by", { exact: true }).selectOption("assignee");
+                                                                  ^
+TimeoutError: selectOption: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByLabel('Group board by', { exact: true })[22m
+
+  log: [ "  - waiting for getByLabel('Group board by', { exact: true })" ],
+
+      at <repo>/tests/swimlanes-browser.test.ts:38:62
+      at processTicksAndRejections (native:7:39)
+(fail) delivered swimlanes: grouping by assignee renders lanes, dragging between lanes reassigns and persists offline [9236.07ms]
+
+ 0 pass
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [9.54s]

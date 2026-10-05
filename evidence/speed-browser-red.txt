@@ -1,0 +1,22 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/speed-browser.test.ts:
+33 | 
+34 |     // Quick-add: a label, an assignee (matched against the default "Me" member), a priority and a due date
+35 |     // all parse out of one inline-add submission, and the card lands with exactly one Activity entry.
+36 |     await addCard(page, "Backlog", "Fix login #bug @me !high ^tomorrow");
+37 |     const fixLogin = page.getByRole("button", { name: "Open card: Fix login", exact: true });
+38 |     expect(await fixLogin.count()).toBe(1);
+                                        ^
+error: expect(received).toBe(expected)
+
+Expected: 1
+Received: 0
+
+      at <anonymous> (<repo>/tests/speed-browser.test.ts:38:36)
+(fail) keyboard shortcuts, the command palette and quick-add syntax work offline and persist [571.66ms]
+
+ 0 pass
+ 1 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [792.00ms]

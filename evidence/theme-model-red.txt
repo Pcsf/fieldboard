@@ -1,0 +1,14 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/theme.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+SyntaxError: Export named 'themes' not found in module '<repo>/src/model.ts'.
+-------------------------------
+
+
+ 0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [6.00ms]

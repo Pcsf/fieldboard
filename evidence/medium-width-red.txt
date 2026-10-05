@@ -1,0 +1,28 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/medium-width-browser.test.ts:
+31 |       const m = await page.evaluate(() => {
+32 |         const main = document.querySelector("main")!.getBoundingClientRect();
+33 |         const bar = [...document.querySelectorAll<HTMLElement>(".viewbar button, .viewbar select, .viewbar .count")].filter(e => e.offsetParent).map(e => ({ text: e.textContent?.trim() || e.getAttribute("aria-label"), right: e.getBoundingClientRect().right }));
+34 |         return { scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth, mainRight: main.right, worst: bar.sort((a, b) => b.right - a.right)[0]! };
+35 |       });
+36 |       expect([width, m.scrollWidth <= m.innerWidth]).toEqual([width, true]);
+                                                          ^
+error: expect(received).toEqual(expected)
+
+@@ -2,3 +2,3 @@
+    900,
+-   true,
++   false,
+  ]
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (<repo>/tests/medium-width-browser.test.ts:36:54)
+(fail) medium widths (1024, 1280, 1440): the view bar stays inside the page and nothing scrolls the page sideways [664.55ms]
+
+ 0 pass
+ 1 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [868.00ms]

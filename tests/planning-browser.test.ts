@@ -4,7 +4,7 @@ import { mkdtemp, copyFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
-import { baselines, programs, maturities } from "../src/planning";
+import { programs, maturities, defaultCatalog } from "../src/planning";
 
 const saved = async (p: Page) => { await p.getByTestId("storage-status").filter({ hasText: "Saved" }).waitFor(); };
 const persisted = (p: Page) => p.evaluate(async () => new Promise<any>(resolve => {
@@ -32,8 +32,9 @@ test("delivered planning: estimates, staffing, sprint load, calibration, drafts 
     await page.getByRole("button", { name: "Open card: CSR", exact: true }).click();
     await page.getByLabel("Estimate", { exact: true }).fill("77"); await page.getByLabel("Estimate", { exact: true }).press("Tab"); await saved(page);
     await page.getByRole("button", { name: "Start IED estimate", exact: true }).click();
-    expect(await page.getByLabel("IED baseline", { exact: true }).locator("option").allTextContents()).toEqual([...baselines.map(b => b.name), "Custom / calibrated baseline"]);
-    await page.getByLabel("IED baseline", { exact: true }).selectOption({ label: "Hand-written register bank / CSR with decode logic" });
+    expect(await page.getByLabel("Category", { exact: true }).locator("option").allTextContents()).toEqual(["Custom task", ...defaultCatalog.map(c => `${c.name} (${c.kind})`)]);
+    await page.getByLabel("Category", { exact: true }).selectOption({ label: "Register interface (design)" });
+    await page.getByLabel("Subcategory", { exact: true }).selectOption({ label: "Hand-written CSR with decode logic" });
     await page.getByLabel("Requested scope", { exact: true }).fill("Decode and access side effects");
     await page.getByLabel("Verification factor", { exact: true }).fill("1.8"); await page.getByLabel("Verification factor", { exact: true }).press("Tab");
     await page.getByLabel("Sprint number", { exact: true }).fill("1"); await page.getByLabel("Sprint number", { exact: true }).press("Tab"); await saved(page);
@@ -75,12 +76,10 @@ test("delivered planning: estimates, staffing, sprint load, calibration, drafts 
     await page.getByRole("button", { name: "Close dialog", exact: true }).click();
     await page.getByRole("button", { name: "Open card: CSR", exact: true }).click();
     await page.getByLabel("Spec factor", { exact: true }).fill("1"); await page.getByLabel("Spec factor", { exact: true }).press("Tab"); await saved(page);
-    await page.getByText("Baseline split (IED)", { exact: true }).click();
     await page.getByLabel("RTL minimum IED", { exact: true }).fill("-2"); await page.getByLabel("RTL minimum IED", { exact: true }).press("Tab");
     await page.getByTestId("storage-status").filter({ hasText: "Not saved" }).waitFor();
     expect((await persisted(page)).cards[0].effort.rtl[0]).toBe(2);
     await page.reload(); await saved(page); await page.getByRole("button", { name: "Open card: CSR", exact: true }).click();
-    await page.getByText("Baseline split (IED)", { exact: true }).click();
     expect(await page.getByLabel("RTL minimum IED", { exact: true }).inputValue()).toBe("-2");
     await page.getByLabel("RTL minimum IED", { exact: true }).fill("2"); await page.getByLabel("RTL minimum IED", { exact: true }).press("Tab"); await saved(page);
     // A failed text journal cannot be bypassed by the new numeric controls.
@@ -96,6 +95,72 @@ test("delivered planning: estimates, staffing, sprint load, calibration, drafts 
     expect(JSON.parse(await Bun.file(backupPath).text())).toEqual(current);
     const fresh = await context.browser()!.newContext({ offline: true });
     try { const restored = await fresh.newPage(); await restored.goto(pathToFileURL(file).href); await saved(restored); restored.once("dialog", d => d.accept()); await restored.getByLabel("Restore JSON backup").setInputFiles(backupPath); await restored.getByRole("button", { name: "Open card: CSR", exact: true }).waitFor(); await saved(restored); expect({ ...await persisted(restored), revision: current.revision }).toEqual(current); } finally { await fresh.close(); }
+    expect(errors).toEqual([]); expect(requests).toEqual([]);
+  } finally { await context.close(); await rm(root, { recursive: true, force: true }); await rm(socketRoot, { recursive: true, force: true }); }
+}, 60000);
+
+test("delivered IED catalog, custom task, lab access factor, catalog edits and direct capacity survive offline reload", async () => {
+  const build = Bun.spawn(["bun", "scripts/build.ts"], { stdout: "pipe", stderr: "pipe" }); expect(await build.exited).toBe(0);
+  const root = await mkdtemp(join(process.cwd(), ".fieldboard-test-catalog-"));
+  const socketRoot = await mkdtemp(join(tmpdir(), "fb-"));
+  const file = join(root, "fieldboard.html"); await copyFile("dist/fieldboard.html", file);
+  const context = await chromium.launchPersistentContext(join(root, "profile"), { executablePath: process.env.CHROMIUM_PATH || "/usr/sbin/chromium", headless: true, chromiumSandbox: process.getuid?.() !== 0, env: { ...process.env, TMPDIR: socketRoot }, viewport: { width: 1440, height: 1100 } });
+  context.setDefaultTimeout(6000); await context.setOffline(true);
+  const errors: string[] = [], requests: string[] = [];
+  await context.route(/^https?:/, r => { requests.push(r.request().url()); return r.abort(); });
+  const page = context.pages()[0]!; page.on("pageerror", e => errors.push(e.message));
+  try {
+    await page.goto(pathToFileURL(file).href); await saved(page);
+    await page.getByRole("button", { name: "New project", exact: true }).click();
+    await page.getByLabel("Project name", { exact: true }).fill("Catalog project");
+    await page.getByRole("button", { name: "Create project", exact: true }).click(); await saved(page);
+    await page.locator(".column").first().getByRole("button", { name: "Add card at bottom" }).click();
+    await page.getByPlaceholder("Card title").fill("Custom"); await page.getByPlaceholder("Card title").press("Enter"); await saved(page);
+    await page.getByRole("button", { name: "Open card: Custom", exact: true }).click();
+    await page.getByRole("button", { name: "Start IED estimate", exact: true }).click();
+
+    expect(await page.getByLabel("Category", { exact: true }).inputValue()).toBe("custom");
+    expect(await page.getByLabel("Subcategory", { exact: true }).isDisabled()).toBe(true);
+    await page.getByLabel("Unsplit work minimum IED", { exact: true }).fill("3"); await page.getByLabel("Unsplit work minimum IED", { exact: true }).press("Tab");
+    await page.getByLabel("Unsplit work maximum IED", { exact: true }).fill("5"); await page.getByLabel("Unsplit work maximum IED", { exact: true }).press("Tab"); await saved(page);
+    expect(await page.locator("#effort-result").textContent()).toContain("3.00–5.00 IED");
+    await page.getByLabel("Lab access factor", { exact: true }).fill("1.25"); await page.getByLabel("Lab access factor", { exact: true }).press("Tab"); await saved(page);
+    expect(await page.locator("#effort-result").textContent()).toContain("3.75–6.25 IED");
+
+    await page.getByLabel("Category", { exact: true }).selectOption({ label: "Board bring-up (lab)" });
+    await page.getByLabel("Subcategory", { exact: true }).selectOption({ label: "New custom board, first hardware" }); await saved(page);
+    expect(await page.locator("#effort-result").textContent()).toContain("7.50–18.75 IED");
+    expect((await persisted(page)).cards[0].effort.category).toBe("board-bringup");
+    expect((await persisted(page)).cards[0].effort.subcategoryFactor).toBe(1.5);
+    await page.getByRole("button", { name: "Close card", exact: true }).click();
+
+    await page.getByRole("button", { name: "Effort & planning", exact: true }).click();
+    await page.getByRole("button", { name: "Enable project planning", exact: true }).click(); await saved(page);
+    await page.getByLabel("Capacity mode", { exact: true }).selectOption({ label: "Direct" });
+    await page.getByLabel("Direct capacity (IED per sprint)", { exact: true }).fill("10"); await page.getByLabel("Direct capacity (IED per sprint)", { exact: true }).press("Tab"); await saved(page);
+    expect(await page.locator("#planning-results").textContent()).toContain("10.00 IED / sprint");
+
+    await page.getByLabel("New category name", { exact: true }).fill("Power rail sequencing");
+    await page.getByLabel("New category RTL IED (split shape)", { exact: true }).fill("1");
+    await page.getByLabel("New category verification IED (split shape)", { exact: true }).fill("1");
+    await page.getByRole("button", { name: "Add category", exact: true }).click(); await saved(page);
+    expect(await page.getByLabel("Category name: Power rail sequencing", { exact: true }).count()).toBe(1);
+    await page.getByLabel("Category name: Power rail sequencing", { exact: true }).fill("Power rail FSM");
+    await page.getByLabel("Category name: Power rail sequencing", { exact: true }).press("Tab"); await saved(page);
+    expect(await page.getByLabel("Category name: Power rail FSM", { exact: true }).count()).toBe(1);
+    page.once("dialog", d => d.accept());
+    await page.getByLabel("Delete category Power rail FSM", { exact: true }).click(); await saved(page);
+    expect(await page.getByLabel("Category name: Power rail FSM", { exact: true }).count()).toBe(0);
+    await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+
+    await page.reload(); await saved(page);
+    await page.getByRole("button", { name: "Effort & planning", exact: true }).click();
+    expect(await page.getByLabel("Capacity mode", { exact: true }).inputValue()).toBe("direct");
+    expect(await page.getByLabel("Direct capacity (IED per sprint)", { exact: true }).inputValue()).toBe("10");
+    await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+    await page.getByRole("button", { name: "Open card: Custom", exact: true }).click();
+    expect(await page.getByLabel("Category", { exact: true }).inputValue()).toBe("board-bringup");
+
     expect(errors).toEqual([]); expect(requests).toEqual([]);
   } finally { await context.close(); await rm(root, { recursive: true, force: true }); await rm(socketRoot, { recursive: true, force: true }); }
 }, 60000);

@@ -101,7 +101,7 @@ test("filters: AND semantics, description search, due states and fragment roundt
   p.labels.push({id:"bug",name:"Bug",color:"#ff0000"});
   const c = createCard(w, first.id, "Ship", "bottom");
   editCard(w,c.id,{description:"Special text",labels:["bug"],assignees:[w.members[0]!.id],priority:"high",dueDate:"2026-01-02"});
-  const f: Filters = { q:"special",label:"bug",assignee:w.members[0]!.id,priority:"high",due:"overdue",project:p.id };
+  const f: Filters = { q:"special",label:"bug",assignee:w.members[0]!.id,priority:"high",due:"overdue",project:p.id,milestone:"",blocked:"",epic:"",board:"",view:"",sort:"",group:"" };
   expect(matches(c,f,new Date("2026-01-04T12:00:00"))).toBe(true);
   expect(matches(c,{...f,priority:"urgent"},new Date("2026-01-04"))).toBe(false);
   expect(matches(c,{...f,due:"none"})).toBe(false);
@@ -117,7 +117,7 @@ describe("backup", () => {
   });
   test("rejects invalid fields, relationships, duplicate IDs, dates, schema and future versions", () => {
     const { w, first } = fixture(); createCard(w,first.id,"Valid","bottom");
-    const bads: ((x: any)=>void)[] = [x=>x.schemaVersion=999, x=>x.cards[0].columnId="missing", x=>x.cards.push(x.cards[0]), x=>x.cards[0].priority="super", x=>x.cards[0].dueDate="2026-99-99", x=>x.cards[0].labels=["foreign"], x=>x.cards[0].assignees=["unknown"], x=>x.projects[0].labels[0]={id:"bad",name:"bad",color:"url(https://evil)"}, x=>x.cards[0].title=42, x=>delete x.activities, x=>x.cards[0].position=-1];
+    const bads: ((x: any)=>void)[] = [x=>x.schemaVersion=999, x=>x.cards[0].columnId="missing", x=>x.cards.push(x.cards[0]), x=>x.cards[0].priority="super", x=>x.cards[0].dueDate="2026-99-99", x=>x.cards[0].labels=["foreign"], x=>x.cards[0].assignees=["unknown"], x=>x.projects[0].labels[0]={id:"bad",name:"bad",color:"url(https://evil)"}, x=>x.cards[0].title=42, x=>delete x.activities, x=>x.cards[0].position=-1, x=>x.cards[0].startDate="2026-99-99", x=>{x.cards[0].startDate="2026-01-05";x.cards[0].dueDate="2026-01-01";}];
     for (const bad of bads) { const x=structuredClone(w); bad(x); expect(()=>validateWorkspace(x)).toThrow(); }
   });
   test("migration preserves populated v1 data", () => {
@@ -135,4 +135,29 @@ test("Markdown: formats safe text while refusing HTML, script links and remote i
   expect(result).toContain("<code>code</code>"); expect(result).toContain("<li>item</li>");
   expect(result).not.toMatch(/<script|<img|href="javascript:|<[^>]+onerror=/);
   expect(result).toContain('rel="noopener noreferrer"');
+});
+
+test("calendar-invalid dates are rejected as invalid workspace data, not as a runtime RangeError", () => {
+  const w = createWorkspace(); const p = createProject(w, "Dates");
+  const col = w.columns.find(c => c.boardId === w.boards.find(b => b.projectId === p.id)!.id)!;
+  const c = createCard(w, col.id, "Card", "bottom");
+  const bad = structuredClone(w); bad.cards.find(x => x.id === c.id)!.dueDate = "2026-13-40";
+  expect(() => validateWorkspace(bad)).toThrow(/^Invalid workspace: invalid date$/);
+  const badMilestone = structuredClone(w); (badMilestone.projects[0] as any).milestones = [{ id: "m", name: "M", date: "2026-02-31", description: "" }];
+  expect(() => validateWorkspace(badMilestone)).toThrow(/^Invalid workspace/);
+});
+
+test("startDate: optional, additive, and must not fall after dueDate when both are set", () => {
+  const w = createWorkspace(); const p = createProject(w, "Timeline");
+  const col = w.columns.find(c => c.boardId === w.boards.find(b => b.projectId === p.id)!.id)!;
+  const c = createCard(w, col.id, "Card", "bottom");
+  expect(c.startDate).toBeUndefined();
+  expect(() => validateWorkspace(JSON.parse(JSON.stringify(w)))).not.toThrow(); // absent on old/plain cards
+  editCard(w, c.id, { startDate: "2026-03-09", dueDate: "2026-03-11" });
+  expect(w.cards.find(x => x.id === c.id)!.startDate).toBe("2026-03-09");
+  expect(() => validateWorkspace(JSON.parse(JSON.stringify(w)))).not.toThrow();
+  const invalid = structuredClone(w); invalid.cards.find(x => x.id === c.id)!.startDate = "2026-03-12"; // after dueDate
+  expect(() => validateWorkspace(invalid)).toThrow(/start date after due date/);
+  editCard(w, c.id, { dueDate: null }); // clearing the due date leaves a lone start date valid
+  expect(() => validateWorkspace(JSON.parse(JSON.stringify(w)))).not.toThrow();
 });

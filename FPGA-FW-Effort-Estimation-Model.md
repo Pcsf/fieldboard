@@ -13,33 +13,65 @@ created: 2026-07-18
 
 1 IED = 6–7 hours of uninterrupted, flow-state engineering by an experienced digital designer focused exclusively on the task. IED measures *work volume*, decoupled from availability, meetings, tool turnaround, and FTE. Calendar conversion happens at the end (see "IED to calendar" below).
 
-## Table 1 — Baseline effort by task type (nominal complexity)
+## Table 1 — IED catalog: category × subcategory (nominal complexity)
 
-Baselines assume a single synchronous clock domain, a mature spec, and standard self-checking directed testbench verification. RTL and verification are split because the verification factor applies only to verification (see the formula).
+A category sets the baseline IED; a subcategory's factor scales that baseline for the specific case — "main category, Serial link RTL design (1.5 RTL / 1.5 verif IED); subcategory, SPI (×1)" is the shape of every row below. This replaces the old flat task-type list so the categories read as general types of work, with the specific variant moved to the subcategory. Subcategory factors not derived from the original flat table are starting values to replace through calibration (see "Calibration loop" below): every lab-category factor, the serial-link protocol split, and the two unsplit-category subcategories.
 
-| Task type                                                                                                                 | RTL (IED) | Verif (IED) | Total (IED) |
-| ------------------------------------------------------------------------------------------------------------------------- | --------- | ----------- | ----------- |
-| Register map, auto-generated (SystemRDL/CSV → AXI-Lite)                                                                   | 0.5       | 0.5         | 1.0         |
-| Hand-written register bank / [[CSR-Is-the-Control-and-Status-Register-Bank\|CSR]] with decode logic                       | 2.0       | 1.5         | 3.5         |
-| Standard FSM controller (5–10 states, sequencing/handshakes)                                                              | 2.0       | 2.0         | 4.0         |
-| Complex hierarchical / multi-engine FSM (>15 states)                                                                      | 4.0       | 4.0         | 8.0         |
-| Simple 2-FF / pulse synchronizer + constraints                                                                            | 0.5       | 0.5         | 1.0         |
-| Async FIFO / handshake / Gray-code crossing                                                                               | 1.5       | 2.0         | 3.5         |
-| Dynamic clock switching / PLL reconfiguration logic                                                                       | 2.5       | 2.5         | 5.0         |
-| Fixed-point FIR/IIR filter pipeline (standard coeffs)                                                                     | 2.0       | 2.0         | 4.0         |
-| Algorithmic datapath (CORDIC, FFT, matrix engine)                                                                         | 5.0       | 5.0         | 10.0        |
-| Python/MATLAB bit-accurate golden reference model                                                                         | —         | 3.0         | 3.0         |
-| **Vendor IP integration incl. fidelity verification** (configure, stub parity TB, real-IP capture, IP-grounded profiling) | 3.0       | 4.0         | 7.0         |
-| Low-speed controller (SPI, I2C, UART) from scratch                                                                        | 1.5       | 1.5         | 3.0         |
-| High-speed vendor IP wrapper (PCIe, 10GbE, Aurora, AXI-DMA)                                                               | 3.0       | 3.0         | 6.0         |
-| External memory controller integration (DDR4/5 MIG wrapper)                                                               | 4.0       | 4.0         | 8.0         |
-| Custom high-speed ADC/DAC SERDES framing interface                                                                        | 4.0       | 5.0         | 9.0         |
-| Top-level structural RTL / block-design wiring                                                                            | 2.0       | 3.0         | 5.0         |
-| Pinout, IO standards, primary clock constraints                                                                           | 1.5       | 1.0         | 2.5         |
-| **Debug of existing / legacy design** (reproduce, root-cause, fix)                                                        | —         | —           | 2–10        |
-| **Timing closure beyond initial pass** (as distinct task)                                                                 | —         | —           | 2–8         |
+**Design categories** — RTL and verification are split because the verification factor applies only to verification (see the formula).
 
-The bolded rows (vendor-IP fidelity, legacy debug, closure-beyond-initial) were added to the source documents: they are the highest-variance lines in real ASML-style work and have no baseline in the originals.
+| Category | RTL (IED) | Verif (IED) | Subcategory | × |
+| --- | --- | --- | --- | --- |
+| Register interface | 2.0 | 1.5 | Hand-written CSR with decode logic | 1.0 |
+| Register interface | 2.0 | 1.5 | Auto-generated register map (SystemRDL/CSV → AXI-Lite) | 0.3 |
+| Control logic / FSM | 2.0 | 2.0 | Standard FSM (5–10 states) | 1.0 |
+| Control logic / FSM | 2.0 | 2.0 | Complex hierarchical / multi-engine FSM (>15 states) | 2.0 |
+| Clock-domain crossing | 1.5 | 2.0 | Simple 2-FF / pulse synchronizer | 0.3 |
+| Clock-domain crossing | 1.5 | 2.0 | Async FIFO / handshake / Gray-code crossing | 1.0 |
+| Clock-domain crossing | 1.5 | 2.0 | Dynamic clock switching / PLL reconfiguration | 1.4 |
+| DSP datapath | 2.0 | 2.0 | Fixed-point FIR/IIR filter | 1.0 |
+| DSP datapath | 2.0 | 2.0 | Algorithmic datapath (CORDIC, FFT, matrix engine) | 2.5 |
+| Serial link RTL design | 1.5 | 1.5 | SPI | 1.0 |
+| Serial link RTL design | 1.5 | 1.5 | I2C | 1.0 |
+| Serial link RTL design | 1.5 | 1.5 | UART | 1.0 |
+| High-speed interface | 3.0 | 3.0 | Vendor IP wrapper (PCIe, 10GbE, Aurora, AXI-DMA) | 1.0 |
+| High-speed interface | 3.0 | 3.0 | External memory controller (DDR4/5 MIG) | 1.33 |
+| High-speed interface | 3.0 | 3.0 | Custom ADC/DAC SERDES framing | 1.5 |
+| Vendor IP integration | 3.0 | 4.0 | Integration incl. fidelity verification | 1.0 |
+| Top level and constraints | 2.0 | 3.0 | Structural RTL / block-design wiring | 1.0 |
+| Top level and constraints | 2.0 | 3.0 | Pinout, IO standards, primary clocks | 0.5 |
+| Reference models | 0.0 | 3.0 | Bit-accurate golden model (Python/MATLAB) | 1.0 |
+
+**Unsplit design categories** — no RTL/verification split in the original tables, so the base is a range instead of two fixed numbers.
+
+| Category | Min (IED) | Max (IED) | Subcategory | × |
+| --- | --- | --- | --- | --- |
+| Legacy debug | 2.0 | 10.0 | Reproduce, root-cause and fix | 1.0 |
+| Timing closure beyond first pass | 2.0 | 8.0 | As a distinct task | 1.0 |
+
+**Lab categories** — hardware and bench work (board bring-up, hardware test benches, characterization, debug instrumentation, field update, qualification, production test). Also unsplit; all factors here are starting values.
+
+| Category | Min (IED) | Max (IED) | Subcategory | × |
+| --- | --- | --- | --- | --- |
+| Board bring-up | 4.0 | 10.0 | Known board or reference design | 0.6 |
+| Board bring-up | 4.0 | 10.0 | Soft-processor system with peripherals | 1.0 |
+| Board bring-up | 4.0 | 10.0 | New custom board, first hardware | 1.5 |
+| Hardware testbench verification | 3.0 | 6.0 | Scripted register tests (JTAG-to-AXI, System Console) | 0.7 |
+| Hardware testbench verification | 3.0 | 6.0 | Embedded test firmware on target | 1.0 |
+| Hardware testbench verification | 3.0 | 6.0 | Automated hardware regression rig | 1.6 |
+| Interface characterization | 2.0 | 5.0 | SERDES eye scan / IBERT | 1.0 |
+| Interface characterization | 2.0 | 5.0 | Timing margin at the system boundary | 1.2 |
+| Interface characterization | 2.0 | 5.0 | ADC/DAC capture with SNR/ENOB analysis | 1.4 |
+| On-chip debug instrumentation | 1.0 | 3.0 | Single-domain ILA / SignalTap capture | 0.5 |
+| On-chip debug instrumentation | 1.0 | 3.0 | Cross-domain or multi-trigger capture | 1.3 |
+| Configuration and field update | 2.0 | 4.0 | Flash programming flow | 0.6 |
+| Configuration and field update | 2.0 | 4.0 | Golden/update image with fallback validation | 1.5 |
+| Qualification and compliance | 5.0 | 15.0 | Environmental / temperature testing | 1.0 |
+| Qualification and compliance | 5.0 | 15.0 | EMC pre-compliance | 1.0 |
+| Qualification and compliance | 5.0 | 15.0 | Metrology certification (e.g. INMETRO) | 2.0 |
+| Production test support | 3.0 | 6.0 | Boundary-scan test | 0.7 |
+| Production test support | 3.0 | 6.0 | Manufacturing test image | 1.0 |
+
+Every category and subcategory above is the built-in default; the workspace may hold its own edited catalog (added, renamed and re-valued categories and subcategories), kept separately from these defaults.
 
 ## Table 2 — Correction factors (per module)
 
@@ -62,6 +94,9 @@ Apply to the module, not the whole project. Baseline conditions = 1.00.
 | Verification rigor — **applies to the verification column only** | Basic directed sanity TB                       | 0.80      |
 |                                                                  | Self-checking directed TB, full edge cases     | 1.00      |
 |                                                                  | Constrained-random (UVM/UVVM/OSVVM) + coverage | 1.50–1.80 |
+| Lab access                                                       | Dedicated bench                                | 1.00      |
+|                                                                  | Shared lab                                     | 1.25      |
+|                                                                  | Booked or remote lab                           | 1.50      |
 
 **Cap the combined multiplier at ~4.0.** Beyond that the number is an architecture gap, not an estimate — flag the spec and don't quote hours.
 
@@ -86,7 +121,7 @@ Added to the project total; they scale with system complexity, not per module.
 | Hardware bring-up spike (ILA/SignalTap, probing, lab) | 4–10            |
 | Documentation (register manual, block diagrams)       | 10% of RTL time |
 
-Bring-up is the single most variance-prone line — always price the full 4–10 range, never the low end, and never hide the overrun in the final sprint (one of the source documents' worked examples budgeted 2.0 IED and silently carried a 3.0 IED spike; do not copy that).
+Bring-up is the single most variance-prone line — always price the full 4–10 range, never the low end, and never hide the overrun in the final sprint (one of the source documents' worked examples budgeted 2.0 IED and silently carried a 3.0 IED spike; do not copy that). Zero this overhead when bring-up itself is being estimated as Board bring-up (lab category) cards instead — otherwise it is paid for twice, once here and once per card.
 
 ## Worked example A — 8-channel FIR pipeline (new design)
 
@@ -143,16 +178,16 @@ Calendar weeks     = WD / (5 × N_FTE × η_team)
 
 Scenario comparison for example A (35 IED, 63 WD):
 
-| Staffing | Effective WD/day | Duration |
-|---|---|---|
-| 1.0 FTE dedicated (η 1.00) | 1.00 | 12.7 weeks |
-| 0.5 FTE split (η 0.80) | 0.40 | ~32 weeks (~7.5 months) |
-| 2 × 1.0 FTE (η 0.85) | 1.70 | ~7.4 weeks |
+| Staffing                   | Effective WD/day | Duration                |
+| -------------------------- | ---------------- | ----------------------- |
+| 1.0 FTE dedicated (η 1.00) | 1.00             | 12.7 weeks              |
+| 0.5 FTE split (η 0.80)     | 0.40             | ~32 weeks (~7.5 months) |
+| 2 × 1.0 FTE (η 0.85)       | 1.70             | ~7.4 weeks              |
 
 Slicing example A across sprints at 5.5 IED/sprint (6–7 sprints total):
 
-1. Golden model (3.75) + [[CSR]] RTL start (~1.7)
-2. [[CSR]] done + verification (~2.6) + async FIFO RTL (~2.5)
+1. Golden model (3.75) + [[CSR-Is-the-Control-and-Status-Register-Bank|CSR]] RTL start (~1.7)
+2. [[CSR-Is-the-Control-and-Status-Register-Bank|CSR]] done + verification (~2.6) + async FIFO RTL (~2.5)
 3. FIFO verification (~3.4) + FIR RTL start (~2.1)
 4. FIR datapath done + wrapper (~4.5)
 5. Integration TB + golden-vector sweep (~5.0)

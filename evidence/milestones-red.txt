@@ -1,0 +1,14 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/milestones.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+error: Cannot find module '../src/milestones' from '<repo>/tests/milestones.test.ts'
+-------------------------------
+
+
+ 0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [7.00ms]

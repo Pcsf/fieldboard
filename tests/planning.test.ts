@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { baselines, defaultEffort, defaultPlanning, estimateModule, estimateProject, programBand, sprintLoads, recordCalibration } from "../src/planning";
+import { baselines, defaultEffort, defaultPlanning, estimateModule, estimateProject, programBand, sprintLoads, recordCalibration, defaultCatalog, catalogEffort, effectiveCatalog, validateCatalog, addCategory, editCategory, deleteCategory, addSubcategory, editSubcategory, deleteSubcategory, capacityPerWorkingDay, validatePlanning, sprintBoard, setSprintOverride, type Range } from "../src/planning";
 import { createWorkspace, createProject, createCard, editCard, moveCard, archiveCard, undoWorkspace, validateWorkspace, migrateWorkspace } from "../src/model";
 import { Storage, Session, DraftJournal } from "../src/storage";
 import { IDBFactory } from "fake-indexeddb";
@@ -191,4 +191,133 @@ test("planning survives journal recovery, snapshot and fresh-storage backup rest
   const other = new Storage(factory, "fresh"); await other.open();
   await other.commit(migrateWorkspace(JSON.parse(JSON.stringify(committed))), 0);
   expect(await other.load()).toEqual(committed); store.close(); other.close();
+});
+
+test("default catalog has 18 workspace-editable categories split between design and lab work", () => {
+  expect(defaultCatalog).toHaveLength(18);
+  expect(defaultCatalog.filter(c => c.kind === "lab")).toHaveLength(7);
+  expect(defaultCatalog.filter(c => c.kind === "design")).toHaveLength(11);
+  for (const c of defaultCatalog) {
+    expect(c.subcategories.length).toBeGreaterThan(0);
+    expect((c.rtl !== undefined) !== (c.other !== undefined)).toBe(true);
+  }
+  expect(() => validateCatalog(defaultCatalog)).not.toThrow();
+});
+
+test("catalog base × subcategory factor fills the baseline split and records provenance once", () => {
+  const spi = catalogEffort(defaultCatalog, "serial-link", "spi");
+  expect(spi.rtl).toEqual([1.5, 1.5]); expect(spi.verification).toEqual([1.5, 1.5]); expect(spi.subcategoryFactor).toBe(1);
+  const clockSwitch = catalogEffort(defaultCatalog, "cdc", "clock-switch");
+  expect(clockSwitch.rtl).toEqual([1.5 * 1.4, 1.5 * 1.4]); expect(clockSwitch.verification).toEqual([2 * 1.4, 2 * 1.4]);
+  const bringup = catalogEffort(defaultCatalog, "board-bringup", "new-custom-board");
+  expect(bringup.other).toEqual([4 * 1.5, 10 * 1.5]); expect(bringup.rtl).toEqual([0, 0]);
+  expect(bringup.baseline).toBe("custom"); expect(bringup.category).toBe("board-bringup"); expect(bringup.subcategory).toBe("new-custom-board");
+  expect(() => catalogEffort(defaultCatalog, "missing", "spi")).toThrow();
+  expect(() => catalogEffort(defaultCatalog, "serial-link", "missing")).toThrow();
+});
+
+test("catalog CRUD edits the workspace's own copy, validates inputs and refuses deleting an in-use entry", () => {
+  const { w, c } = fixture();
+  const cat = addCategory(w, "Power sequencing", "design", { rtl: 1, verification: 1 });
+  const subA = addSubcategory(w, cat.id, "Basic", 1);
+  const subB = addSubcategory(w, cat.id, "Redundant", 1.5);
+  editCategory(w, cat.id, { name: "Power sequencing FSM", rtl: 1.2 });
+  editSubcategory(w, cat.id, subA.id, { factor: 1.1 });
+  expect(effectiveCatalog(w).find(x => x.id === cat.id)!.name).toBe("Power sequencing FSM");
+  expect(defaultCatalog.some(x => x.id === cat.id)).toBe(false);
+  editCard(w, c.id, { effort: { ...defaultEffort(), ...catalogEffort(effectiveCatalog(w), cat.id, subA.id) } });
+  expect(() => deleteCategory(w, cat.id)).toThrow();
+  expect(() => deleteSubcategory(w, cat.id, subA.id)).toThrow();
+  deleteSubcategory(w, cat.id, subB.id);
+  expect(effectiveCatalog(w).find(x => x.id === cat.id)!.subcategories).toHaveLength(1);
+  expect(() => deleteSubcategory(w, cat.id, subA.id)).toThrow(); // last remaining subcategory
+  editCard(w, c.id, { effort: defaultEffort() });
+  deleteCategory(w, cat.id);
+  expect(effectiveCatalog(w).some(x => x.id === cat.id)).toBe(false);
+  expect(() => addCategory(w, "  ", "design", { rtl: 1, verification: 1 })).toThrow();
+  expect(() => addSubcategory(w, defaultCatalog[0]!.id, "x", 0)).toThrow();
+  expect(() => editCategory(w, "missing", { name: "x" })).toThrow();
+});
+
+test("validateCatalog rejects malformed categories and subcategories", () => {
+  const bads: ((c: any[]) => void)[] = [
+    c => c[0].kind = "weird", c => c[0].rtl = -1, c => c[0].other = [1, 2],
+    c => c[0].subcategories = [], c => c[0].subcategories[0].factor = 0, c => c[1].id = c[0].id,
+    c => c[0].subcategories[1] = c[0].subcategories[0],
+  ];
+  for (const bad of bads) { const clone = structuredClone(defaultCatalog); bad(clone); expect(() => validateCatalog(clone)).toThrow(); }
+});
+
+test("lab access factor multiplies the common factor and counts toward the architecture gate", () => {
+  const e = defaultEffort("csr"); e.factors.lab = 1.5;
+  const withLab = estimateModule(e).ied;
+  const withoutLab = estimateModule({ ...e, factors: { ...e.factors, lab: 1 } }).ied;
+  expect(withLab).toEqual([withoutLab[0] * 1.5, withoutLab[1] * 1.5]);
+  expect(estimateModule(e).architectureGap).toBe(false);
+  e.factors.spec = 2; e.factors.utilization = 1.4;
+  expect(estimateModule(e).multiplier).toBeCloseTo(4.2);
+  expect(estimateModule(e).architectureGap).toBe(true);
+  delete (e.factors as any).lab; // old data without the field behaves exactly as factor 1
+  expect(estimateModule(e).multiplier).toBeCloseTo(2.8);
+});
+
+test("direct capacity mode and per-sprint overrides size sprints without touching the staffing formula", () => {
+  const { w, p, c } = fixture(); p.planning = defaultPlanning();
+  p.planning.capacityMode = "direct"; p.planning.directCapacity = 8; p.planning.sprintWeeks = 2;
+  expect(capacityPerWorkingDay(p.planning)).toBeCloseTo(.8);
+  editCard(w, c.id, { effort: { ...defaultEffort("csr"), sprint: 1 } });
+  expect(estimateProject(w, p.id).capacity).toBeCloseTo(8);
+  setSprintOverride(w, p.id, 1, 3);
+  let board = sprintBoard(w, p.id);
+  expect(board.sprints[0]!.capacity).toBe(3); expect(board.sprints[0]!.capacitySource).toBe("overridden"); expect(board.sprints[0]!.verdict).toBe("over");
+  setSprintOverride(w, p.id, 1, null);
+  board = sprintBoard(w, p.id);
+  expect(board.sprints[0]!.capacitySource).toBe("direct"); expect(board.sprints[0]!.capacity).toBe(8); expect(board.sprints[0]!.verdict).toBe("within");
+  expect(() => validatePlanning({ ...p.planning, capacityMode: "bogus" })).toThrow();
+  expect(() => validatePlanning({ ...p.planning, directCapacity: -1 })).toThrow();
+  expect(() => validatePlanning({ ...p.planning, sprintOverrides: { "0": 1 } })).toThrow();
+  expect(() => setSprintOverride(w, p.id, 0, 1)).toThrow();
+  expect(() => setSprintOverride(w, "missing", 1, 1)).toThrow();
+});
+
+test("sprintBoard marks architecture gaps and unsized cards as not quotable and lists unassigned estimated cards", () => {
+  const { w, p, c } = fixture(); p.planning = defaultPlanning();
+  const other = createCard(w, w.columns[0]!.id, "Unassigned work", "bottom");
+  editCard(w, other.id, { effort: defaultEffort("csr") });
+  const e = defaultEffort("csr"); e.sprint = 2; e.factors.spec = 5; editCard(w, c.id, { effort: e });
+  const board = sprintBoard(w, p.id);
+  expect(board.sprints[0]!.verdict).toBe("not quotable");
+  expect(board.unassigned.map(x => x.id)).toEqual([other.id]);
+});
+
+test("legacy baseline cards and calibrations keep their IED numbers through the catalog change", () => {
+  const w = createWorkspace(); createProject(w, "Legacy");
+  const before: Record<string, Range> = {};
+  for (const b of baselines) {
+    const card = createCard(w, w.columns[0]!.id, b.id, "bottom");
+    const effort = defaultEffort(b.id);
+    delete (effort as any).category; delete (effort as any).subcategory; delete (effort as any).factors.lab;
+    editCard(w, card.id, { effort });
+    recordCalibration(w, card.id, 1, "baseline check");
+    before[b.id] = estimateModule(w.cards.find(x => x.id === card.id)!.effort!).ied;
+  }
+  const text = JSON.stringify(w);
+  const reloaded = migrateWorkspace(JSON.parse(text));
+  for (const c of reloaded.cards) expect(estimateModule(c.effort!).ied).toEqual(before[c.title]!);
+  expect(JSON.stringify(reloaded)).toBe(text);
+});
+
+test("direct capacity drives the calendar quote: weeks, sprints and the coarse band all use the entered IED per sprint", () => {
+  const { w, p, c } = fixture(); p.planning = defaultPlanning();
+  p.planning.capacityMode = "direct"; p.planning.directCapacity = 8; p.planning.sprintWeeks = 2;
+  editCard(w, c.id, { effort: defaultEffort("csr") });
+  const r = estimateProject(w, p.id);
+  expect(r.total[0]).toBeCloseTo(13.575); expect(r.total[1]).toBeCloseTo(26.575);
+  expect(r.sprints).toEqual([2, 4]);
+  expect(r.weeks![0]).toBeCloseTo(13.575 / 8 * 2); expect(r.weeks![1]).toBeCloseTo(26.575 / 8 * 2);
+  expect(r.workingDays).toBeNull();
+  expect(r.bandWeeks![0]).toBeCloseTo(15 / 4); expect(r.bandWeeks![1]).toBeCloseTo(35 / 4);
+  p.planning.capacityMode = "derived";
+  const d = estimateProject(w, p.id);
+  expect(d.weeks![0]).toBeCloseTo(13.575 / (.65 * .85) / 5); expect(d.workingDays![0]).toBeCloseTo(13.575 / (.65 * .85));
 });

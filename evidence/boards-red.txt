@@ -1,0 +1,22 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/my-work.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+error: Cannot find module '../src/my-work' from '<repo>/tests/my-work.test.ts'
+-------------------------------
+
+
+tests/boards.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+SyntaxError: Export named 'addBoard' not found in module '<repo>/src/model.ts'.
+-------------------------------
+
+
+ 0 pass
+ 2 fail
+ 2 errors
+Ran 2 tests across 2 files. [6.00ms]

@@ -1,0 +1,25 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/timeline-browser.test.ts:
+29 |       await page.locator(".column").first().getByRole("button", { name: "Add card at bottom" }).click();
+30 |       await page.getByPlaceholder("Card title").fill(title); await page.getByPlaceholder("Card title").press("Enter"); await saved(page);
+31 |     };
+32 |     const schedule = async (title: string, start: string, due: string, blockedBy?: string) => {
+33 |       await page.getByRole("button", { name: `Open card: ${title}`, exact: true }).click();
+34 |       await page.getByLabel("Start date", { exact: true }).fill(start); await page.getByLabel("Start date", { exact: true }).press("Tab"); await saved(page);
+                                                                ^
+TimeoutError: fill: Timeout 6000ms exceeded.
+Call log:
+[2m  - waiting for getByLabel('Start date', { exact: true })[22m
+
+  log: [ "  - waiting for getByLabel('Start date', { exact: true })" ],
+
+      at <repo>/tests/timeline-browser.test.ts:34:60
+      at <repo>/tests/timeline-browser.test.ts:40:11
+      at processTicksAndRejections (native:7:39)
+(fail) delivered timeline view: bar geometry, dependency arrows and not-scheduled cards, light and dark, offline [7026.01ms]
+
+ 0 pass
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [7.31s]

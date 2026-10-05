@@ -1,0 +1,30 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/palette.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+error: Cannot find module '../src/palette' from '<repo>/tests/palette.test.ts'
+-------------------------------
+
+
+tests/keyboard.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+error: Cannot find module '../src/keyboard' from '<repo>/tests/keyboard.test.ts'
+-------------------------------
+
+
+tests/quickadd.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+error: Cannot find module '../src/quickadd' from '<repo>/tests/quickadd.test.ts'
+-------------------------------
+
+
+ 0 pass
+ 3 fail
+ 3 errors
+Ran 3 tests across 3 files. [5.00ms]

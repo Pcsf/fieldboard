@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/phone-menu-browser.test.ts:
+26 |     await page.goto(url); await saved();
+27 |     await page.getByRole("button", { name: "New project", exact: true }).click();
+28 |     await page.getByLabel("Project name", { exact: true }).fill("Mobile"); await page.getByRole("button", { name: "Create project", exact: true }).click(); await saved();
+29 |     const items = ["Workspace & members", "Daily snapshots", "Download backup", "Restore JSON backup", "Help & storage safety"];
+30 |     const menu = page.getByRole("button", { name: "Menu", exact: true });
+31 |     expect(await menu.getAttribute("aria-expanded")).toBe("false");
+                           ^
+TimeoutError: getAttribute: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'Menu', exact: true })[22m
+
+  log: [ "  - waiting for getByRole('button', { name: 'Menu', exact: true })" ],
+
+      at <repo>/tests/phone-menu-browser.test.ts:31:23
+      at processTicksAndRejections (native:7:39)
+(fail) phone width (390x844): every sidebar action is reachable through the Menu button [8582.41ms]
+
+ 0 pass
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [8.80s]

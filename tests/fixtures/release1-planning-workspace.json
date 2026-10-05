@@ -1,0 +1,918 @@
+{
+  "schemaVersion": 2,
+  "revision": 0,
+  "id": "548c4513-0a32-40b0-9404-0f83a6cfbb33",
+  "name": "My workspace",
+  "members": [
+    {
+      "id": "fda19780-a0a1-4e53-9707-47ccd2cafd6d",
+      "name": "Me",
+      "color": "#5169bc"
+    }
+  ],
+  "settings": {
+    "actorId": "fda19780-a0a1-4e53-9707-47ccd2cafd6d"
+  },
+  "projects": [
+    {
+      "id": "3523bb0c-7a04-4666-9b20-09f0e0b868cd",
+      "name": "Release one planning",
+      "description": "",
+      "color": "#667b68",
+      "status": "active",
+      "labels": [],
+      "planning": {
+        "program": "feature",
+        "maturity": "frozen",
+        "contingency": 0.25,
+        "build": [
+          2,
+          4
+        ],
+        "timing": [
+          3,
+          8
+        ],
+        "bringup": [
+          4,
+          10
+        ],
+        "documentation": 0.1,
+        "focus": 0.65,
+        "availability": 0.85,
+        "fte": 1,
+        "team": 1,
+        "sprintWeeks": 2,
+        "assumptions": "Frozen spec"
+      }
+    }
+  ],
+  "boards": [
+    {
+      "id": "f4191c2e-d924-481a-89af-13f7029385a3",
+      "projectId": "3523bb0c-7a04-4666-9b20-09f0e0b868cd",
+      "name": "Board",
+      "swimlane": "none"
+    }
+  ],
+  "columns": [
+    {
+      "id": "0c004b75-fc86-4316-b5f7-8090e56dc0c1",
+      "boardId": "f4191c2e-d924-481a-89af-13f7029385a3",
+      "name": "Backlog",
+      "position": 0,
+      "wipLimit": null,
+      "done": false
+    },
+    {
+      "id": "64548ac3-1723-4260-976c-802f52ad8116",
+      "boardId": "f4191c2e-d924-481a-89af-13f7029385a3",
+      "name": "To Do",
+      "position": 1,
+      "wipLimit": null,
+      "done": false
+    },
+    {
+      "id": "82db174e-5767-444a-a5f9-0efe0823964b",
+      "boardId": "f4191c2e-d924-481a-89af-13f7029385a3",
+      "name": "In Progress",
+      "position": 2,
+      "wipLimit": null,
+      "done": false
+    },
+    {
+      "id": "20e2ccb5-46ac-477f-b372-d41fda2737a4",
+      "boardId": "f4191c2e-d924-481a-89af-13f7029385a3",
+      "name": "Review",
+      "position": 3,
+      "wipLimit": null,
+      "done": false
+    },
+    {
+      "id": "519284e1-0f88-44ac-b4f9-7cc0cb654eb3",
+      "boardId": "f4191c2e-d924-481a-89af-13f7029385a3",
+      "name": "Done",
+      "position": 4,
+      "wipLimit": null,
+      "done": true
+    }
+  ],
+  "cards": [
+    {
+      "id": "72b13e29-04bf-4513-92c5-162f65f4e720",
+      "columnId": "519284e1-0f88-44ac-b4f9-7cc0cb654eb3",
+      "position": 0,
+      "title": "CSR bank",
+      "description": "",
+      "priority": "high",
+      "dueDate": "2026-03-02",
+      "estimate": null,
+      "labels": [],
+      "assignees": [],
+      "subtasks": [],
+      "comments": [],
+      "attachments": [],
+      "links": [],
+      "createdAt": "2026-10-05T13:28:00.795Z",
+      "updatedAt": "2026-10-05T13:28:00.796Z",
+      "completedAt": "2026-10-05T13:28:00.796Z",
+      "archived": false,
+      "effort": {
+        "baseline": "csr",
+        "rtl": [
+          2,
+          2
+        ],
+        "verification": [
+          1.5,
+          1.5
+        ],
+        "other": [
+          0,
+          0
+        ],
+        "factors": {
+          "spec": 1,
+          "clock": 1,
+          "utilization": 1,
+          "reuse": 1,
+          "verification": 1
+        },
+        "scope": "",
+        "assumptions": "",
+        "sprint": 1
+      },
+      "calibrations": [
+        {
+          "timestamp": "2026-10-05T13:28:00.796Z",
+          "inputs": {
+            "baseline": "csr",
+            "rtl": [
+              2,
+              2
+            ],
+            "verification": [
+              1.5,
+              1.5
+            ],
+            "other": [
+              0,
+              0
+            ],
+            "factors": {
+              "spec": 1,
+              "clock": 1,
+              "utilization": 1,
+              "reuse": 1,
+              "verification": 1
+            },
+            "scope": "",
+            "assumptions": "",
+            "sprint": 1
+          },
+          "estimate": {
+            "ied": [
+              3.5,
+              3.5
+            ],
+            "rtl": [
+              2,
+              2
+            ],
+            "multiplier": 1,
+            "architectureGap": false
+          },
+          "actualIED": 4.2,
+          "missedFactor": "Decode side effects"
+        }
+      ]
+    },
+    {
+      "id": "13d26191-be54-4816-aa75-81e026a1d423",
+      "columnId": "64548ac3-1723-4260-976c-802f52ad8116",
+      "position": 0,
+      "title": "Async FIFO",
+      "description": "",
+      "priority": "none",
+      "dueDate": null,
+      "estimate": null,
+      "labels": [],
+      "assignees": [],
+      "subtasks": [],
+      "comments": [],
+      "attachments": [],
+      "links": [],
+      "createdAt": "2026-10-05T13:28:00.796Z",
+      "updatedAt": "2026-10-05T13:28:00.796Z",
+      "completedAt": null,
+      "archived": false,
+      "effort": {
+        "baseline": "async-fifo",
+        "rtl": [
+          1.5,
+          1.5
+        ],
+        "verification": [
+          2,
+          2
+        ],
+        "other": [
+          0,
+          0
+        ],
+        "factors": {
+          "spec": 1.25,
+          "clock": 1.35,
+          "utilization": 1,
+          "reuse": 1,
+          "verification": 1
+        },
+        "scope": "",
+        "assumptions": "",
+        "sprint": 2
+      }
+    },
+    {
+      "id": "88856488-3caa-4490-bd36-7fa30fc71330",
+      "columnId": "0c004b75-fc86-4316-b5f7-8090e56dc0c1",
+      "position": 0,
+      "title": "Legacy debug",
+      "description": "",
+      "priority": "none",
+      "dueDate": null,
+      "estimate": null,
+      "labels": [],
+      "assignees": [],
+      "subtasks": [],
+      "comments": [],
+      "attachments": [],
+      "links": [],
+      "createdAt": "2026-10-05T13:28:00.796Z",
+      "updatedAt": "2026-10-05T13:28:00.796Z",
+      "completedAt": null,
+      "archived": false,
+      "effort": {
+        "baseline": "legacy-debug",
+        "rtl": [
+          0,
+          0
+        ],
+        "verification": [
+          0,
+          0
+        ],
+        "other": [
+          2,
+          10
+        ],
+        "factors": {
+          "spec": 1,
+          "clock": 1,
+          "utilization": 1,
+          "reuse": 1,
+          "verification": 1
+        },
+        "scope": "",
+        "assumptions": "",
+        "sprint": null
+      }
+    }
+  ],
+  "activities": [
+    {
+      "id": "c988fe0a-7b6a-462e-8ed4-05cdbb7f7001",
+      "cardId": "72b13e29-04bf-4513-92c5-162f65f4e720",
+      "actor": "fda19780-a0a1-4e53-9707-47ccd2cafd6d",
+      "action": "create",
+      "before": null,
+      "after": {
+        "id": "72b13e29-04bf-4513-92c5-162f65f4e720",
+        "columnId": "64548ac3-1723-4260-976c-802f52ad8116",
+        "position": 0,
+        "title": "CSR bank",
+        "description": "",
+        "priority": "none",
+        "dueDate": null,
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.795Z",
+        "updatedAt": "2026-10-05T13:28:00.795Z",
+        "completedAt": null,
+        "archived": false
+      },
+      "timestamp": "2026-10-05T13:28:00.796Z"
+    },
+    {
+      "id": "01e5a910-5bde-4d6e-adfc-3f245ae31e95",
+      "cardId": "72b13e29-04bf-4513-92c5-162f65f4e720",
+      "actor": "fda19780-a0a1-4e53-9707-47ccd2cafd6d",
+      "action": "edit",
+      "before": {
+        "id": "72b13e29-04bf-4513-92c5-162f65f4e720",
+        "columnId": "64548ac3-1723-4260-976c-802f52ad8116",
+        "position": 0,
+        "title": "CSR bank",
+        "description": "",
+        "priority": "none",
+        "dueDate": null,
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.795Z",
+        "updatedAt": "2026-10-05T13:28:00.795Z",
+        "completedAt": null,
+        "archived": false
+      },
+      "after": {
+        "id": "72b13e29-04bf-4513-92c5-162f65f4e720",
+        "columnId": "64548ac3-1723-4260-976c-802f52ad8116",
+        "position": 0,
+        "title": "CSR bank",
+        "description": "",
+        "priority": "high",
+        "dueDate": "2026-03-02",
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.795Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": null,
+        "archived": false,
+        "effort": {
+          "baseline": "csr",
+          "rtl": [
+            2,
+            2
+          ],
+          "verification": [
+            1.5,
+            1.5
+          ],
+          "other": [
+            0,
+            0
+          ],
+          "factors": {
+            "spec": 1,
+            "clock": 1,
+            "utilization": 1,
+            "reuse": 1,
+            "verification": 1
+          },
+          "scope": "",
+          "assumptions": "",
+          "sprint": 1
+        }
+      },
+      "timestamp": "2026-10-05T13:28:00.796Z"
+    },
+    {
+      "id": "a9ccf87f-2de2-4160-a7b3-87b5b1efb343",
+      "cardId": "13d26191-be54-4816-aa75-81e026a1d423",
+      "actor": "fda19780-a0a1-4e53-9707-47ccd2cafd6d",
+      "action": "create",
+      "before": null,
+      "after": {
+        "id": "13d26191-be54-4816-aa75-81e026a1d423",
+        "columnId": "64548ac3-1723-4260-976c-802f52ad8116",
+        "position": 1,
+        "title": "Async FIFO",
+        "description": "",
+        "priority": "none",
+        "dueDate": null,
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.796Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": null,
+        "archived": false
+      },
+      "timestamp": "2026-10-05T13:28:00.796Z"
+    },
+    {
+      "id": "06709f3b-f7d5-49b3-84b5-c67cf0a53f8b",
+      "cardId": "13d26191-be54-4816-aa75-81e026a1d423",
+      "actor": "fda19780-a0a1-4e53-9707-47ccd2cafd6d",
+      "action": "edit",
+      "before": {
+        "id": "13d26191-be54-4816-aa75-81e026a1d423",
+        "columnId": "64548ac3-1723-4260-976c-802f52ad8116",
+        "position": 1,
+        "title": "Async FIFO",
+        "description": "",
+        "priority": "none",
+        "dueDate": null,
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.796Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": null,
+        "archived": false
+      },
+      "after": {
+        "id": "13d26191-be54-4816-aa75-81e026a1d423",
+        "columnId": "64548ac3-1723-4260-976c-802f52ad8116",
+        "position": 1,
+        "title": "Async FIFO",
+        "description": "",
+        "priority": "none",
+        "dueDate": null,
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.796Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": null,
+        "archived": false,
+        "effort": {
+          "baseline": "async-fifo",
+          "rtl": [
+            1.5,
+            1.5
+          ],
+          "verification": [
+            2,
+            2
+          ],
+          "other": [
+            0,
+            0
+          ],
+          "factors": {
+            "spec": 1.25,
+            "clock": 1.35,
+            "utilization": 1,
+            "reuse": 1,
+            "verification": 1
+          },
+          "scope": "",
+          "assumptions": "",
+          "sprint": 2
+        }
+      },
+      "timestamp": "2026-10-05T13:28:00.796Z"
+    },
+    {
+      "id": "1542e496-b753-44cd-be7f-0a9590e7d24c",
+      "cardId": "88856488-3caa-4490-bd36-7fa30fc71330",
+      "actor": "fda19780-a0a1-4e53-9707-47ccd2cafd6d",
+      "action": "create",
+      "before": null,
+      "after": {
+        "id": "88856488-3caa-4490-bd36-7fa30fc71330",
+        "columnId": "0c004b75-fc86-4316-b5f7-8090e56dc0c1",
+        "position": 0,
+        "title": "Legacy debug",
+        "description": "",
+        "priority": "none",
+        "dueDate": null,
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.796Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": null,
+        "archived": false
+      },
+      "timestamp": "2026-10-05T13:28:00.796Z"
+    },
+    {
+      "id": "61660d26-fda9-44e1-9840-2fa82c81bda5",
+      "cardId": "88856488-3caa-4490-bd36-7fa30fc71330",
+      "actor": "fda19780-a0a1-4e53-9707-47ccd2cafd6d",
+      "action": "edit",
+      "before": {
+        "id": "88856488-3caa-4490-bd36-7fa30fc71330",
+        "columnId": "0c004b75-fc86-4316-b5f7-8090e56dc0c1",
+        "position": 0,
+        "title": "Legacy debug",
+        "description": "",
+        "priority": "none",
+        "dueDate": null,
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.796Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": null,
+        "archived": false
+      },
+      "after": {
+        "id": "88856488-3caa-4490-bd36-7fa30fc71330",
+        "columnId": "0c004b75-fc86-4316-b5f7-8090e56dc0c1",
+        "position": 0,
+        "title": "Legacy debug",
+        "description": "",
+        "priority": "none",
+        "dueDate": null,
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.796Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": null,
+        "archived": false,
+        "effort": {
+          "baseline": "legacy-debug",
+          "rtl": [
+            0,
+            0
+          ],
+          "verification": [
+            0,
+            0
+          ],
+          "other": [
+            2,
+            10
+          ],
+          "factors": {
+            "spec": 1,
+            "clock": 1,
+            "utilization": 1,
+            "reuse": 1,
+            "verification": 1
+          },
+          "scope": "",
+          "assumptions": "",
+          "sprint": null
+        }
+      },
+      "timestamp": "2026-10-05T13:28:00.796Z"
+    },
+    {
+      "id": "b9951c63-76da-4307-9495-ce192838fda0",
+      "cardId": "72b13e29-04bf-4513-92c5-162f65f4e720",
+      "actor": "fda19780-a0a1-4e53-9707-47ccd2cafd6d",
+      "action": "move",
+      "before": {
+        "id": "72b13e29-04bf-4513-92c5-162f65f4e720",
+        "columnId": "64548ac3-1723-4260-976c-802f52ad8116",
+        "position": 0,
+        "title": "CSR bank",
+        "description": "",
+        "priority": "high",
+        "dueDate": "2026-03-02",
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.795Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": null,
+        "archived": false,
+        "effort": {
+          "baseline": "csr",
+          "rtl": [
+            2,
+            2
+          ],
+          "verification": [
+            1.5,
+            1.5
+          ],
+          "other": [
+            0,
+            0
+          ],
+          "factors": {
+            "spec": 1,
+            "clock": 1,
+            "utilization": 1,
+            "reuse": 1,
+            "verification": 1
+          },
+          "scope": "",
+          "assumptions": "",
+          "sprint": 1
+        }
+      },
+      "after": {
+        "id": "72b13e29-04bf-4513-92c5-162f65f4e720",
+        "columnId": "519284e1-0f88-44ac-b4f9-7cc0cb654eb3",
+        "position": 0,
+        "title": "CSR bank",
+        "description": "",
+        "priority": "high",
+        "dueDate": "2026-03-02",
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.795Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": "2026-10-05T13:28:00.796Z",
+        "archived": false,
+        "effort": {
+          "baseline": "csr",
+          "rtl": [
+            2,
+            2
+          ],
+          "verification": [
+            1.5,
+            1.5
+          ],
+          "other": [
+            0,
+            0
+          ],
+          "factors": {
+            "spec": 1,
+            "clock": 1,
+            "utilization": 1,
+            "reuse": 1,
+            "verification": 1
+          },
+          "scope": "",
+          "assumptions": "",
+          "sprint": 1
+        }
+      },
+      "timestamp": "2026-10-05T13:28:00.796Z"
+    },
+    {
+      "id": "5a2acfd1-bc07-4b16-9906-3b5db5b6d818",
+      "cardId": "13d26191-be54-4816-aa75-81e026a1d423",
+      "actor": "fda19780-a0a1-4e53-9707-47ccd2cafd6d",
+      "action": "move",
+      "before": {
+        "id": "13d26191-be54-4816-aa75-81e026a1d423",
+        "columnId": "64548ac3-1723-4260-976c-802f52ad8116",
+        "position": 1,
+        "title": "Async FIFO",
+        "description": "",
+        "priority": "none",
+        "dueDate": null,
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.796Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": null,
+        "archived": false,
+        "effort": {
+          "baseline": "async-fifo",
+          "rtl": [
+            1.5,
+            1.5
+          ],
+          "verification": [
+            2,
+            2
+          ],
+          "other": [
+            0,
+            0
+          ],
+          "factors": {
+            "spec": 1.25,
+            "clock": 1.35,
+            "utilization": 1,
+            "reuse": 1,
+            "verification": 1
+          },
+          "scope": "",
+          "assumptions": "",
+          "sprint": 2
+        }
+      },
+      "after": {
+        "id": "13d26191-be54-4816-aa75-81e026a1d423",
+        "columnId": "64548ac3-1723-4260-976c-802f52ad8116",
+        "position": 0,
+        "title": "Async FIFO",
+        "description": "",
+        "priority": "none",
+        "dueDate": null,
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.796Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": null,
+        "archived": false,
+        "effort": {
+          "baseline": "async-fifo",
+          "rtl": [
+            1.5,
+            1.5
+          ],
+          "verification": [
+            2,
+            2
+          ],
+          "other": [
+            0,
+            0
+          ],
+          "factors": {
+            "spec": 1.25,
+            "clock": 1.35,
+            "utilization": 1,
+            "reuse": 1,
+            "verification": 1
+          },
+          "scope": "",
+          "assumptions": "",
+          "sprint": 2
+        }
+      },
+      "timestamp": "2026-10-05T13:28:00.796Z"
+    },
+    {
+      "id": "31942406-26f4-4a4c-b4c9-8f601f7f64d1",
+      "cardId": "72b13e29-04bf-4513-92c5-162f65f4e720",
+      "actor": "fda19780-a0a1-4e53-9707-47ccd2cafd6d",
+      "action": "edit",
+      "before": {
+        "id": "72b13e29-04bf-4513-92c5-162f65f4e720",
+        "columnId": "519284e1-0f88-44ac-b4f9-7cc0cb654eb3",
+        "position": 0,
+        "title": "CSR bank",
+        "description": "",
+        "priority": "high",
+        "dueDate": "2026-03-02",
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.795Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": "2026-10-05T13:28:00.796Z",
+        "archived": false,
+        "effort": {
+          "baseline": "csr",
+          "rtl": [
+            2,
+            2
+          ],
+          "verification": [
+            1.5,
+            1.5
+          ],
+          "other": [
+            0,
+            0
+          ],
+          "factors": {
+            "spec": 1,
+            "clock": 1,
+            "utilization": 1,
+            "reuse": 1,
+            "verification": 1
+          },
+          "scope": "",
+          "assumptions": "",
+          "sprint": 1
+        }
+      },
+      "after": {
+        "id": "72b13e29-04bf-4513-92c5-162f65f4e720",
+        "columnId": "519284e1-0f88-44ac-b4f9-7cc0cb654eb3",
+        "position": 0,
+        "title": "CSR bank",
+        "description": "",
+        "priority": "high",
+        "dueDate": "2026-03-02",
+        "estimate": null,
+        "labels": [],
+        "assignees": [],
+        "subtasks": [],
+        "comments": [],
+        "attachments": [],
+        "links": [],
+        "createdAt": "2026-10-05T13:28:00.795Z",
+        "updatedAt": "2026-10-05T13:28:00.796Z",
+        "completedAt": "2026-10-05T13:28:00.796Z",
+        "archived": false,
+        "effort": {
+          "baseline": "csr",
+          "rtl": [
+            2,
+            2
+          ],
+          "verification": [
+            1.5,
+            1.5
+          ],
+          "other": [
+            0,
+            0
+          ],
+          "factors": {
+            "spec": 1,
+            "clock": 1,
+            "utilization": 1,
+            "reuse": 1,
+            "verification": 1
+          },
+          "scope": "",
+          "assumptions": "",
+          "sprint": 1
+        },
+        "calibrations": [
+          {
+            "timestamp": "2026-10-05T13:28:00.796Z",
+            "inputs": {
+              "baseline": "csr",
+              "rtl": [
+                2,
+                2
+              ],
+              "verification": [
+                1.5,
+                1.5
+              ],
+              "other": [
+                0,
+                0
+              ],
+              "factors": {
+                "spec": 1,
+                "clock": 1,
+                "utilization": 1,
+                "reuse": 1,
+                "verification": 1
+              },
+              "scope": "",
+              "assumptions": "",
+              "sprint": 1
+            },
+            "estimate": {
+              "ied": [
+                3.5,
+                3.5
+              ],
+              "rtl": [
+                2,
+                2
+              ],
+              "multiplier": 1,
+              "architectureGap": false
+            },
+            "actualIED": 4.2,
+            "missedFactor": "Decode side effects"
+          }
+        ]
+      },
+      "timestamp": "2026-10-05T13:28:00.796Z"
+    }
+  ]
+}

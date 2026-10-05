@@ -1,0 +1,9 @@
+1,000-card drag move, drop -> IndexedDB strict commit complete (ms), headless Chromium 152, 8 runs per row, interleaved.
+before (2097bce): 62.9 63.8 65.2 92.5 92.8 95.0 95.3 95.8  median 92.8
+after:            51.9 61.0 61.4 75.9 76.2 76.8 77.7 80.4  median 76.2
+before (2097bce): 63.6 64.2 67.6 77.0 93.4 94.3 94.8 95.3  median 93.4
+after:            50.6 75.6 76.6 77.1 77.6 77.9 78.2 80.5  median 77.6
+Changes: stale DOM children removed before reordering (one insert per move instead of ~200),
+per-render card index for epic/dependency badges (was a full card scan per card),
+indexed card lookups in validation, no extra deep copy before the IndexedDB put.
+Remaining time is mostly the strict-durability flush; the main thread is idle while it completes.

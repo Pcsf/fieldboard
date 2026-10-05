@@ -1,0 +1,136 @@
+{
+  "3523bb0c-7a04-4666-9b20-09f0e0b868cd": {
+    "project": {
+      "modules": [
+        11.40625,
+        19.40625
+      ],
+      "rtl": [
+        4.53125,
+        4.53125
+      ],
+      "documentation": [
+        0.453125,
+        0.453125
+      ],
+      "overheads": [
+        9.453125,
+        22.453125
+      ],
+      "contingency": [
+        2.8515625,
+        4.8515625
+      ],
+      "total": [
+        23.7109375,
+        46.7109375
+      ],
+      "remaining": [
+        7.90625,
+        15.90625
+      ],
+      "unestimated": 0,
+      "architectureGaps": 0,
+      "capacity": 5.5249999999999995,
+      "workingDays": [
+        42.915723981900456,
+        84.54468325791855
+      ],
+      "weeks": [
+        8.583144796380092,
+        16.908936651583712
+      ],
+      "sprints": [
+        5,
+        9
+      ],
+      "band": [
+        15,
+        35
+      ],
+      "bandWeeks": [
+        5.429864253393665,
+        12.669683257918553
+      ],
+      "bandMismatch": false,
+      "unallocated": [
+        11.953125,
+        34.953125
+      ],
+      "cardCount": 3
+    },
+    "sprints": [
+      {
+        "sprint": 1,
+        "ied": [
+          4.375,
+          4.375
+        ],
+        "cards": 1,
+        "architectureGap": false,
+        "unestimated": 0,
+        "capacity": 5.5249999999999995,
+        "overloaded": false
+      },
+      {
+        "sprint": 2,
+        "ied": [
+          7.3828125,
+          7.3828125
+        ],
+        "cards": 1,
+        "architectureGap": false,
+        "unestimated": 0,
+        "capacity": 5.5249999999999995,
+        "overloaded": true
+      }
+    ],
+    "modules": [
+      [
+        "72b13e29-04bf-4513-92c5-162f65f4e720",
+        {
+          "ied": [
+            3.5,
+            3.5
+          ],
+          "rtl": [
+            2,
+            2
+          ],
+          "multiplier": 1,
+          "architectureGap": false
+        }
+      ],
+      [
+        "13d26191-be54-4816-aa75-81e026a1d423",
+        {
+          "ied": [
+            5.90625,
+            5.90625
+          ],
+          "rtl": [
+            2.53125,
+            2.53125
+          ],
+          "multiplier": 1.6875,
+          "architectureGap": false
+        }
+      ],
+      [
+        "88856488-3caa-4490-bd36-7fa30fc71330",
+        {
+          "ied": [
+            2,
+            10
+          ],
+          "rtl": [
+            0,
+            0
+          ],
+          "multiplier": 1,
+          "architectureGap": false
+        }
+      ]
+    ]
+  }
+}

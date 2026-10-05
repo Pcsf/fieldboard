@@ -1,0 +1,26 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/planning.test.ts:
+312 |   p.planning.capacityMode = "direct"; p.planning.directCapacity = 8; p.planning.sprintWeeks = 2;
+313 |   editCard(w, c.id, { effort: defaultEffort("csr") });
+314 |   const r = estimateProject(w, p.id);
+315 |   expect(r.total[0]).toBeCloseTo(13.575); expect(r.total[1]).toBeCloseTo(26.575);
+316 |   expect(r.sprints).toEqual([2, 4]);
+317 |   expect(r.weeks![0]).toBeCloseTo(13.575 / 8 * 2); expect(r.weeks![1]).toBeCloseTo(26.575 / 8 * 2);
+                            ^
+error: expect(received).toBeCloseTo(expected, precision)
+
+Expected: 3.39375
+Received: 4.914027149321267
+
+Expected precision: 2
+Expected difference: < 0.005
+Received difference: 1.5202771493212675
+
+      at <anonymous> (<repo>/tests/planning.test.ts:317:23)
+(fail) direct capacity drives the calendar quote: weeks, sprints and the coarse band all use the entered IED per sprint [0.49ms]
+
+ 25 pass
+ 1 fail
+ 200 expect() calls
+Ran 26 tests across 1 file. [34.00ms]

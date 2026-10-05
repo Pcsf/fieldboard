@@ -1,0 +1,29 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/theme-contrast.test.ts:
+4 |   const tokens: Record<string, string> = {};
+5 |   for (const m of block.matchAll(/--([a-z0-9-]+)\s*:\s*([^;]+);/g)) tokens[m[1]!] = m[2]!.trim();
+6 |   return tokens;
+7 | }
+8 | function block(css: string, selector: RegExp): string {
+9 |   const m = selector.exec(css); if (!m) throw new Error(`Token block not found: ${selector}`);
+                                                      ^
+error: Token block not found: /:root\[data-theme="dark"\]\{/
+      at block (<repo>/tests/theme-contrast.test.ts:9:51)
+      at <anonymous> (<repo>/tests/theme-contrast.test.ts:44:36)
+(fail) theme tokens: light and dark token tables both clear WCAG AA for every defined status/text pair [0.96ms]
+4 |   const tokens: Record<string, string> = {};
+5 |   for (const m of block.matchAll(/--([a-z0-9-]+)\s*:\s*([^;]+);/g)) tokens[m[1]!] = m[2]!.trim();
+6 |   return tokens;
+7 | }
+8 | function block(css: string, selector: RegExp): string {
+9 |   const m = selector.exec(css); if (!m) throw new Error(`Token block not found: ${selector}`);
+                                                      ^
+error: Token block not found: /:root\[data-theme="dark"\]\{/
+      at block (<repo>/tests/theme-contrast.test.ts:9:51)
+      at <anonymous> (<repo>/tests/theme-contrast.test.ts:64:28)
+(fail) theme tokens: dark values actually differ from light for the status-bearing tokens [0.17ms]
+
+ 0 pass
+ 2 fail
+Ran 2 tests across 1 file. [7.00ms]

@@ -1,0 +1,28 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/planning-labels.test.ts:
+23 | 
+24 |   const split = defaultCatalog.filter(c => c.rtl !== undefined);
+25 |   const unsplit = defaultCatalog.filter(c => c.other !== undefined && c.kind === "design");
+26 |   const lab = defaultCatalog.filter(c => c.kind === "lab");
+27 | 
+28 |   expect(splitRows.map(r => [r[0], Number(r[1]), Number(r[2]), r[3], Number(r[4])])).toEqual(
+                                                                                          ^
+error: expect(received).toEqual(expected)
+
+@@ -3,3 +3,3 @@
+      "Register interface",
+-     2,
++     9,
+      1.5,
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (<repo>/tests/planning-labels.test.ts:28:86)
+(fail) IED catalog doc tables match the code's default catalog by name and number [1.06ms]
+
+ 3 pass
+ 1 fail
+ 14 expect() calls
+Ran 4 tests across 1 file. [8.00ms]

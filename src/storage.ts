@@ -49,7 +49,7 @@ export class Storage {
     });
   }
   async commit(state: Workspace, expectedRevision: number): Promise<void> {
-    const valid = validateWorkspace(state);
+    const valid = validateWorkspace(state, false);
     return new Promise((resolve, reject) => {
       const tx = this.transaction("workspace", true); const store = tx.objectStore("workspace"); let cause: unknown;
       const read = store.get("current");

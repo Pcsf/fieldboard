@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/theme-browser.test.ts:
+31 |     // system theme via CSS alone, before any workspace data or JS theme logic has run.
+32 |     await page.goto(url, { waitUntil: "domcontentloaded" });
+33 |     expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBeUndefined();
+34 |     expect(await bg(page)).toBe(LIGHT_BG);
+35 |     await saved(page);
+36 |     expect(await page.locator("#theme-select").inputValue()).toBe("system");
+                                                    ^
+TimeoutError: inputValue: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for locator('#theme-select')[22m
+
+  log: [ "  - waiting for locator('#theme-select')" ],
+
+      at <repo>/tests/theme-browser.test.ts:36:48
+      at processTicksAndRejections (native:7:39)
+(fail) theme: follows system live, a manual System/Light/Dark override persists and travels in backups, and no flash when the override matches the system [8428.38ms]
+
+ 0 pass
+ 1 fail
+ 3 expect() calls
+Ran 1 test across 1 file. [8.62s]

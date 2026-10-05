@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/calendar-browser.test.ts:
+26 |     await page.getByRole("button", { name: "Create project", exact: true }).click(); await saved(page);
+27 | 
+28 |     await page.locator(".column").first().getByRole("button", { name: "Add card at bottom" }).click();
+29 |     await page.getByPlaceholder("Card title").fill("Plan the release"); await page.getByPlaceholder("Card title").press("Enter"); await saved(page);
+30 | 
+31 |     await page.getByRole("button", { name: "Calendar", exact: true }).click();
+                                                                           ^
+TimeoutError: click: Timeout 6000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'Calendar', exact: true })[22m
+
+  log: [ "  - waiting for getByRole('button', { name: 'Calendar', exact: true })" ],
+
+      at <repo>/tests/calendar-browser.test.ts:31:71
+      at processTicksAndRejections (native:7:39)
+(fail) delivered calendar view: drag from No due date onto today, persisted dueDate survives reload, offline [6718.39ms]
+
+ 0 pass
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [7.00s]

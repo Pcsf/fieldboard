@@ -1,0 +1,22 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/phone-browser.test.ts:
+51 |     await page.screenshot({ path: "evidence/phone-board.png", fullPage: false });
+52 | 
+53 |     // A card can be moved to another column through a control visibly labelled "Move to…".
+54 |     await page.getByRole("button", { name: "Open card: Pocket card", exact: true }).click();
+55 |     const label = await page.locator(".detail-sidebar .form-field").first().locator("span").textContent();
+56 |     expect(label).toBe("Move to…");
+                       ^
+error: expect(received).toBe(expected)
+
+Expected: "Move to…"
+Received: "Column"
+
+      at <anonymous> (<repo>/tests/phone-browser.test.ts:56:19)
+(fail) phone width (390x844): no page scroll, the board scrolls, the sidebar stays out of the way, and a card moves via its "Move to…" control [684.38ms]
+
+ 0 pass
+ 1 fail
+ 8 expect() calls
+Ran 1 test across 1 file. [907.00ms]

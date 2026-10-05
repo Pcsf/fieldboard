@@ -1,0 +1,12 @@
+error: expect(received).toBe(expected)
+
+Expected: "Does not fit"
+Received: "Fits"
+
+      at <anonymous> (<repo>/tests/milestones.test.ts:185:22)
+(fail) milestones calc: the fit check includes module contingency, like sprint loads [0.25ms]
+
+ 13 pass
+ 1 fail
+ 53 expect() calls
+Ran 14 tests across 1 file. [15.00ms]

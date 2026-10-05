@@ -1,6 +1,54 @@
+---
+phase: complete
+progress: 25/25
+principal_stated_goal: "start working on Tier 2 and bring the Polish one to the Tie 2 scope. I would like to have light/dark themes in the next release."
+---
+
 # Fieldboard implementation and verification contract
 
-Scope: Tier 1 from `PROMPT.md`, plus mandatory deployment, storage, migration, snapshot, Markdown-security and performance requirements. Tier 2 and Tier 3 remain deferred except for the explicitly requested IED planning extension. This ledger was created before implementation.
+Scope: Tier 1 from `PROMPT.md`, plus mandatory deployment, storage, migration, snapshot, Markdown-security and performance requirements. The IED planning extension was added on request. Release 2 (below) brings Tier 2, themes, responsive layout and milestones into scope.
+
+## Release 2: Tier 2, themes and milestones
+
+Stated goals, in order: *"yes do it and also start implementing it"* (milestones, from the vault note "kanban (fieldboard) improvement idea", 2026-10-05), then *"start working on Tier 2 and bring the Polish one to the Tie 2 scope. I would like to have light/dark themes in the next release."*
+
+Vision: the board stays a pull-based kanban. Planning views (milestones, calendar, timeline) are lenses over the same cards, never a second source of truth, and none of them claims a dependency-aware delivery schedule. Themes make the app comfortable at night without losing any status colour meaning.
+
+Polish scope: themes and responsive layout were shown to the principal and are in. Accessibility (WCAG AA, full keyboard), card covers and colours, and focus mode were omitted from the list shown. They stay out until he confirms them. Offline operation is already mandatory from Tier 1.
+
+Every new field is an optional, additive schema-2 field, like the IED fields. Existing workspaces load unchanged.
+
+| ID | Claim | Falsifier / probe | Status |
+|---|---|---|---|
+| R01 | Theme follows `prefers-color-scheme` by default; a manual System/Light/Dark override persists across reload and backup | browser: emulate dark and light media, toggle override, reload; model: settings validation | Verified: `tests/theme.test.ts`, `tests/theme-browser.test.ts` |
+| R02 | Dark theme keeps every status colour (overdue, soon, priority, WIP, blocked, errors) distinguishable at WCAG AA text contrast | contrast check over the theme token table; viewed screenshots of both themes | Verified for existing status colours: `tests/theme-contrast.test.ts`; dark render confirmed by computed-style probe and viewed screenshots |
+| R03 | Projects hold dated milestones; a card belongs to at most one milestone of its own project | Verified: `tests/milestones.test.ts`, `tests/milestones-browser.test.ts` |
+| R04 | Milestone overview shows each milestone's date, done/total cards, remaining IED and whether remaining effort fits the capacity before the date | Verified: `tests/milestones.test.ts` (fit includes module contingency), `tests/milestones-browser.test.ts` |
+| R05 | Column WIP limits: header shows `n / limit`, amber at the limit, red above; exceeding is allowed | model + browser: set limit, add cards past it, read classes | Verified: `tests/flow.test.ts`, `tests/flow-browser.test.ts` |
+| R06 | A card can be marked blocked with a reason, renders distinctly and can be filtered | model + browser: block, filter, reload | Verified: `tests/flow.test.ts`, `tests/flow-browser.test.ts` |
+| R07 | Card dependencies: a card blocked by an unfinished card shows that on its face; self-reference and unknown references are rejected; deleting a card removes it from dependents | model tests; browser face assertion | Verified: `tests/flow.test.ts` (cycles, cross-project, delete cleanup), `tests/flow-browser.test.ts` |
+| R08 | Epics: a card can parent other cards and shows aggregate child progress; no parent cycles | model tests; browser face assertion | Verified: `tests/flow.test.ts` (parent cycles, delete clears children), `tests/flow-browser.test.ts` |
+| R09 | Swimlanes group a board by assignee, priority, label or epic; dragging between lanes changes that attribute | model + browser drag | Verified: `tests/swimlanes.test.ts`, `tests/swimlanes-browser.test.ts` (red: `evidence/swimlanes-browser-red.txt`) |
+| R10 | A project can hold several boards (add, rename, delete with destination); "My Work" lists every card assigned to the acting member across projects, grouped by due date | model + browser | Verified: `tests/boards.test.ts`, `tests/my-work.test.ts`, `tests/boards-browser.test.ts`, `tests/my-work-browser.test.ts` (browser tests not red-first) |
+| R11 | Card templates (description + subtasks) and board templates (columns + WIP limits) can be saved and reused | model + browser | Verified: `tests/boards.test.ts`, `tests/boards-browser.test.ts` (browser test not red-first) |
+| R12 | Keyboard: `n` new card, `/` search, `e` edit, `←/→` move, `j/k` navigate, `?` cheatsheet | browser key presses with persisted-state assertions | Verified: `tests/keyboard.test.ts`, `tests/speed-browser.test.ts` |
+| R13 | `Ctrl+K` command palette fuzzy-reaches projects, boards, cards and actions | unit test on the matcher; browser open, type, Enter | Verified: `tests/palette.test.ts`, `tests/speed-browser.test.ts` |
+| R14 | Bulk actions: shift/ctrl-click multi-select, then move, label, assign or archive together, as one undo step | browser + persisted state | Verified: `tests/boards.test.ts`, `tests/bulk-browser.test.ts` (browser test not red-first) |
+| R15 | Quick-add `Fix login #bug @paulo !high ^friday` creates the card with label, assignee, priority and due date | parser unit tests incl. unknown member and bad date; browser inline add | Verified: `tests/quickadd.test.ts`, `tests/quickadd-model.test.ts`, `tests/speed-browser.test.ts` |
+| R16 | List view shows the board's cards as a sortable, groupable table | browser sort/group assertions | Verified: `tests/list-view.test.ts`, `tests/list-view-browser.test.ts` (red: `evidence/list-view-browser-red.txt`) |
+| R17 | Calendar view places dated cards on a month/week grid; dropping a card on a day changes its due date | browser drag + persisted state | Verified: `tests/calendar-model.test.ts` (month/week grids, leap years, Monday-first weeks, placement), `tests/calendar-browser.test.ts` (drag onto a day, persisted `dueDate` after reload; red: `evidence/calendar-view-browser-red.txt`; screenshot `evidence/calendar-view.png`) |
+| R18 | Timeline view draws cards with start and due dates as bars, with dependency arrows | browser: bar geometry and arrow count | Verified: `tests/timeline-model.test.ts` (bar geometry, row order, grouping, arrow endpoints, conflict flag and date-axis ticks on fixed fixtures), `tests/timeline-browser.test.ts` (bar `data-start-offset`/`data-span`, arrow count and `.conflict` class, date-axis week label, chart-fills-panel width ratio, bar `title`/z-index above arrows; red: `evidence/timeline-view-browser-red.txt`; screenshots `evidence/timeline-view.png`, `evidence/timeline-view-dark.png`); `startDate` validation: `tests/model.test.ts` |
+| R19 | Phone width (390 px): no page-level horizontal scroll, the board scrolls horizontally, cards move via a "Move to…" menu | browser at 390×844: scrollWidth checks, move via menu | Verified: `tests/phone-browser.test.ts`, `tests/phone-menu-browser.test.ts` (all sidebar actions behind Menu; red: `evidence/phone-menu-red.txt`) |
+| R20 | The release keeps every prior guarantee: single offline HTML, full suite green, existing workspaces load unchanged | `bun run build`, `bun test`, artifact test, schema-2 fixture round trip | Verified: `evidence/release2-build.txt`, 221/221 tests, `tests/release-compat.test.ts` (first-release data and IED numbers unchanged), real Brave via Interceptor: file:// load, storage, project creation and reload persistence; found and fixed view-bar overflow at 900–1020 px (`tests/medium-width-browser.test.ts`, red: `evidence/medium-width-red.txt`) |
+| R21 | Sprint capacity can be entered directly in IED per sprint, as an alternative to the derived staffing formula, with per-sprint overrides (holidays, lab weeks) | planning tests: direct mode, override, validation; browser entry + reload | Verified: `tests/planning.test.ts` (direct mode, overrides), `tests/planning-browser.test.ts` |
+| R22 | Sprint allocation is reachable from the board as its own view: per sprint, the cards, load vs capacity and the remaining headroom | browser: open view, assert loads and over/under verdicts | Verified: `tests/sprints-browser.test.ts`, `evidence/sprints-view.png` |
+| R23 | A custom task gets its IED entered directly (single value or range) without opening a collapsed section | browser: choose Custom, enter IED, result shows it | Verified: `tests/planning-browser.test.ts` (Custom task) |
+| R24 | The IED catalog is two-level: a generic work category with a base RTL/verification IED, and a subcategory whose factor multiplies it; categories and subcategories can be added and edited per workspace | planning tests: seeded catalog, add/edit, factor applied once; browser add flow | Verified: `tests/planning.test.ts`, `tests/planning-labels.test.ts` (doc/code parity; red: `evidence/catalog-labels-red.txt`) |
+| R25 | Existing estimates and calibration records keep their IED numbers through the catalog change | migration test on a workspace holding every old baseline id | Verified: `tests/planning.test.ts` (all 19 legacy baselines + calibrations unchanged) |
+
+Not red-first, stated: browser tests for R10, R11, R14 and the pure-function tests of R12–R18 were written alongside or after their code; R09, R16, R17 and R18 browser tests were observed red first.
+
+Anti-claims: no claim closes on a test written after its feature was observed passing without saying so; no runtime network access or second file; no planning view writes a date the user did not set; no hand-edited dist output.
 
 ## Effort estimation integration
 

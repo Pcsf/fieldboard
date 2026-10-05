@@ -1,0 +1,22 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/milestones-browser.test.ts:
+39 |     await page.getByLabel("Milestone", { exact: true }).selectOption({ label: "Beta launch" }); await saved(page);
+40 |     await page.getByRole("button", { name: "Close card", exact: true }).click();
+41 |     expect(await page.getByRole("button", { name: "Open card: Ship", exact: true }).locator(".milestone-chip").textContent()).toContain("Beta launch");
+42 | 
+43 |     await page.getByRole("button", { name: "Milestones", exact: true }).click();
+44 |     expect(await page.locator(".milestone-row").textContent()).toContain("1 unestimated card");
+                                                                    ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "1 unestimated card"
+Received: "\n    \n    \n    Delete\n    \n    120 days remaining0/1 cards done0.00 IED + 1 unestimatedPlanning not enabled\n    "
+
+      at <anonymous> (<repo>/tests/milestones-browser.test.ts:44:64)
+(fail) delivered milestones: overview, card chip, delete-unassigns and the milestone filter survive reload offline [963.02ms]
+
+ 0 pass
+ 1 fail
+ 5 expect() calls
+Ran 1 test across 1 file. [1189.00ms]

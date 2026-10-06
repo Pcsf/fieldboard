@@ -1,6 +1,6 @@
 ---
-phase: climbing
-progress: 53/55
+phase: complete
+progress: 54/55
 principal_stated_goal: "do all in sequency. it is your call in which order. I will not be around for the next 8h, therefore, you can decide the next steps. implement all features and release it. try to finishe the full project today."
 ---
 
@@ -105,12 +105,14 @@ Out of scope, with reason: lab factor calibration (it needs real lab actuals tha
 | R51 | Focus mode hides every card not assigned to the acting member in board, list, calendar and timeline, and survives reload | browser per view | Verified: `tests/focus.test.ts`, `tests/focus-browser.test.ts` (written with the code, not red-first); all four views, survives reload |
 | R52 | Accessibility: every control is reachable and operable by keyboard, including moving cards and dialogs that trap and return focus; focus is always visible; zero controls lack an accessible name; every text/background pair meets WCAG AA in both themes, including the light-mode colours previously exempted | automated keyboard walk and name audit over every view and dialog; contrast test over the full token table | Verified: `tests/a11y-axe.test.ts` (no violations at any impact across every view and dialog, both themes, 1024 and 390 px), `tests/a11y-keyboard.test.ts`, full-token `tests/theme-contrast.test.ts`; red captured after the fixes by stashing (`evidence/a11y-*-red.txt`). Merge review found the active view tab unstyled after the ARIA change; fixed red-first (`evidence/view-tab-active-red.txt`). Not tried with a real screen reader |
 | R53 | All new data is optional and additive: backups round-trip losslessly and earlier workspaces load unchanged | `tests/release-compat.test.ts` plus a full-feature round-trip fixture | Verified: `tests/release-compat.test.ts`, `tests/full-feature-roundtrip.test.ts` (every new field through JSON backup byte for byte; written after the code, passed on first run) |
-| R54 | With every feature on, a 1,000-card move commits in under 100 ms and drag feedback starts in under 50 ms; scrolling frame rate is measured in a headed browser on this machine | `tests/browser.test.ts` performance; headed frame-time probe | Verified: 1,000-card move 55–57 ms, drag feedback 1.2–1.3 ms on the merged tree (`evidence/performance.json` runs); headed Chromium scroll 60 fps with no frame over 20 ms (`evidence/scroll-fps-headed.txt`). Measured on the development APU, not a mid-range laptop |
-| R55 | The release ships: full suite green, real-browser check, README feature list per tier with status, DECISIONS updated, tagged and published | build, `bun test`, Interceptor, `gh release view` | Open |
+| R54 | With every feature on, a 1,000-card move commits in under 100 ms and drag feedback starts in under 50 ms; scrolling frame rate is measured in a headed browser on this machine | `tests/browser.test.ts` performance; headed frame-time probe | Verified: 1,000-card move 55–80 ms across full-suite runs of the same tree (variance, all under the 100 ms gate), drag feedback 1.2–2.1 ms (`evidence/performance.json` runs); headed Chromium scroll 60 fps with no frame over 20 ms (`evidence/scroll-fps-headed.txt`). Measured on the development APU, not a mid-range laptop |
+| R55 | The release ships: full suite green, real-browser check, README feature list per tier with status, DECISIONS updated, tagged and published | build, `bun test`, Interceptor, `gh release view` | Verified: release commit `c570761`, 466/466 tests, Brave check by hand (`evidence/release-brave-*.png`; found and fixed the CSV done-column bug), README and DECISIONS current, `v0.3.0` published with `SHA256SUMS` verified on download |
 
 Learned: by the end of wave A the 1,000-card move rose from 63 ms to 86–88 ms (file run alone), so headroom under the 100 ms gate is a release risk. A performance pass is scheduled after wave B; the gate stays as it is. Result: shallow card copies, an append-only Activity array reused by reference, and no second validation of an already validated state brought the merged tree to a 64.7 ms median (from 80.2 ms). The shallow copy is only safe while no mutator writes into nested card data, so `tests/clone-isolation.test.ts` enforces that per mutator; a planted in-place write turns it red (`evidence/clone-isolation-planted-red.txt`).
 
 Learned: the first auto-archive design rewrote `completedAt` on restore, which would have silently moved finished cards into the current week of throughput and stretched their lead times. Caught in merge review; fixed with a separate `restoredAt`.
+
+Open: R54 is closed on this machine only. A mid-range laptop has not been measured, so the spec's laptop wording stays unproven. Count: 54 of 55 verified, R54 partly.
 
 Anti-claims: no feature makes a network request; no automation runs while the file is closed or claims to; no card render scans all cards or all activities; no history is rewritten (automation and imports append); no colour outside theme tokens; no claim closes on a test written after its code without saying so.
 

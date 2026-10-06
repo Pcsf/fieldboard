@@ -102,7 +102,7 @@ export function mountCalendar(root: HTMLElement, deps: CalendarDeps) {
     <div class="calendar-body"><div class="calendar-grid${mode === "week" ? " week-mode" : ""}">
     <div class="calendar-weekdays">${weekdayLabels().map(d => `<span>${esc(d)}</span>`).join("")}</div>
     ${grid.map(week => `<div class="calendar-week-row">${week.map(cell => dayCellHTML(cell, byDay.get(cell.date) ?? [], byMilestoneDay.get(cell.date) ?? [])).join("")}</div>`).join("")}</div>
-    <aside class="calendar-sidebar" aria-label="Cards without a due date"><h3>No due date <span class="count">${noDate.length}</span></h3>
+    <aside class="calendar-sidebar" aria-label="Cards without a due date"><h2>No due date <span class="count">${noDate.length}</span></h2>
     <div class="calendar-nodate-list" data-calendar-nodate>${noDate.map(cardChip).join("") || '<p class="muted">Every filtered card has a due date.</p>'}</div></aside></div>`;
   root.querySelectorAll<HTMLButtonElement>("[data-calendar-card]").forEach(btn => {
     btn.onclick = () => deps.openCard(btn.dataset.calendarCard!);

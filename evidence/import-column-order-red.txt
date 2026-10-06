@@ -1,0 +1,52 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/import.test.ts:
+94 |   expect(JSON.stringify(w)).toBe(before);
+95 | });
+96 | 
+97 | test("parseCsvBoard: the default column names come back in workflow order, whatever order the rows list them", () => {
+98 |   const imported = parseCsvBoard("title,column\nA,In Progress\nB,To Do\nC,Done\nD,Backlog\nE,Review\n");
+99 |   expect(imported.columns).toEqual(["Backlog", "To Do", "In Progress", "Review", "Done"]);
+                                ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "Backlog",
+-   "To Do",
+    "In Progress",
+-   "Review",
++   "To Do",
+    "Done",
++   "Backlog",
++   "Review",
+  ]
+
+- Expected  - 3
++ Received  + 3
+
+      at <anonymous> (<repo>/tests/import.test.ts:99:28)
+(fail) parseCsvBoard: the default column names come back in workflow order, whatever order the rows list them [0.24ms]
+105 |     { title: "Shipped", description: "", column: "Done", labels: [], priority: "none", dueDate: null, estimate: null, subtasks: [], archived: false },
+106 |     { title: "Later", description: "", column: "Backlog", labels: [], priority: "none", dueDate: null, estimate: null, subtasks: [], archived: false },
+107 |   ] } as never);
+108 |   const board = w.boards.find(b => b.projectId === project.id)!;
+109 |   const doneColumns = w.columns.filter(c => c.boardId === board.id && c.done).map(c => c.name);
+110 |   expect(doneColumns).toEqual(["Done"]);
+                            ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "Done",
++   "Backlog",
+  ]
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (<repo>/tests/import.test.ts:110:23)
+(fail) applyImport: the column named Done is the done column even when it is not last [0.16ms]
+
+ 9 pass
+ 2 fail
+ 42 expect() calls
+Ran 11 tests across 1 file. [7.00ms]

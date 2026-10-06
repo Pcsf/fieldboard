@@ -1,0 +1,29 @@
+{
+  "name": "Field Trial",
+  "lists": [
+    { "id": "list1", "name": "To Do", "closed": false },
+    { "id": "list2", "name": "Doing", "closed": false },
+    { "id": "list3", "name": "Done", "closed": false }
+  ],
+  "cards": [
+    {
+      "id": "c1", "name": "Write report", "desc": "Quarterly report for the field trial.",
+      "idList": "list1", "closed": false, "due": "2026-11-01T00:00:00.000Z",
+      "labels": [{ "id": "l1", "name": "urgent", "color": "red" }]
+    },
+    {
+      "id": "c2", "name": "Fix sensor drift", "desc": "", "idList": "list2", "closed": false, "due": null,
+      "labels": []
+    },
+    {
+      "id": "c3", "name": "Old calibration note", "desc": "No longer needed.", "idList": "list3", "closed": true, "due": null,
+      "labels": [{ "id": "l2", "name": "", "color": "" }]
+    }
+  ],
+  "checklists": [
+    { "id": "ch1", "idCard": "c1", "name": "Steps", "checkItems": [
+      { "id": "i1", "name": "Draft the summary", "state": "complete" },
+      { "id": "i2", "name": "Get sign-off", "state": "incomplete" }
+    ] }
+  ]
+}

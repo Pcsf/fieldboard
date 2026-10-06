@@ -1,4 +1,4 @@
-import { createWorkspace, migrateWorkspace, validateWorkspace, undoWorkspace, type Workspace } from "./model";
+import { createWorkspace, migrateWorkspace, validateWorkspace, undoWorkspace, cloneWorkspace, type Workspace } from "./model";
 export interface Snapshot { date: string; state: Workspace }
 export interface Draft { baseRevision: number; state: Workspace; inFlight?: Workspace | null }
 export type LocalJournal = Pick<globalThis.Storage, "getItem" | "setItem" | "removeItem">;
@@ -117,7 +117,7 @@ export class Session {
   report(error: unknown) { this.status = "error"; this.error = error instanceof Error ? `${error.name}: ${error.message}` : String(error); this.onStatus(); }
   change(mutate: (w: Workspace) => unknown, remember = true) {
     try {
-      const next = structuredClone(this.state); mutate(next); next.revision = this.state.revision + 1;
+      const next = cloneWorkspace(this.state); mutate(next); next.revision = this.state.revision + 1;
       validateWorkspace(next, false); this.journal.write({ baseRevision: this.acknowledged, state: next, inFlight: this.inFlight });
       if (remember) { this.undoStack.push(this.state); if (this.undoStack.length > 50) this.undoStack.shift(); }
       this.state = next; this.error = ""; this.status = "saving"; this.onStatus(); this.start();

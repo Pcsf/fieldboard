@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/automation-browser.test.ts:
+44 |     await page.getByRole("button", { name: "New project", exact: true }).click();
+45 |     await page.getByLabel("Project name", { exact: true }).fill("Automation project");
+46 |     await page.getByRole("button", { name: "Create project", exact: true }).click(); await saved(page);
+47 | 
+48 |     // Create each rule kind through the visible Automation dialog.
+49 |     await page.getByRole("button", { name: "Automation", exact: true }).click();
+                                                                             ^
+TimeoutError: click: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'Automation', exact: true })[22m
+
+  log: [ "  - waiting for getByRole('button', { name: 'Automation', exact: true })" ],
+
+      at <repo>/tests/automation-browser.test.ts:49:73
+      at processTicksAndRejections (native:7:39)
+(fail) delivered automation: rules fire on entry with a history entry, toggle off stops them, undo reverts the effect, and overdue/auto-archive reconcile on launch [8580.68ms]
+
+ 0 pass
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [8.81s]

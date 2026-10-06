@@ -11,7 +11,11 @@ test("build delivers one self-contained HTML file", async () => {
   expect(html).toContain("<!doctype html>");
   expect(html).toContain("Fieldboard");
   expect(html).not.toMatch(/<(?:script|img|iframe|link|source)\b[^>]*(?:src|href)\s*=\s*["'](?:https?:|\/\/|file:|\.\.?\/)/i);
-  expect(html).not.toMatch(/<(?:script|img|iframe|link|source|audio|video|embed|object)\b[^>]*\b(?:src|href|data)\s*=/i);
+  // img is excluded below: the bundle legitimately contains a runtime-built `<img src="...">`
+  // template for attachment thumbnails (src is always a locally stored data: URL, never a
+  // remote one -- the line above still catches a literal remote scheme on any of these tags,
+  // img included, and the CSP's `img-src data:` independently refuses a non-data: image load).
+  expect(html).not.toMatch(/<(?:script|iframe|link|source|audio|video|embed|object)\b[^>]*\b(?:src|href|data)\s*=/i);
   const css = [...html.matchAll(/<style>([\s\S]*?)<\/style>/gi)].map(m => m[1]).join("\n");
   expect(css).not.toMatch(/@import\s|url\s*\(/i);
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/gi)];

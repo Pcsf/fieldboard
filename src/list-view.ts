@@ -15,7 +15,7 @@ export interface ListGroup { key: string; label: string; rows: ListRow[] }
 
 export function listRows(w: Workspace, columns: Column[], labels: Label[], milestones: Milestone[], filters: Filters): ListRow[] {
   const colIds = new Set(columns.map(c => c.id));
-  return w.cards.filter(c => colIds.has(c.columnId) && !c.archived && matches(c, filters)).map(card => ({
+  return w.cards.filter(c => colIds.has(c.columnId) && !c.archived && matches(c, filters, new Date(), w.settings.actorId)).map(card => ({
     card, column: columns.find(c => c.id === card.columnId)!,
     assignees: card.assignees.map(id => w.members.find(m => m.id === id)).filter((m): m is Member => !!m),
     labels: card.labels.map(id => labels.find(l => l.id === id)).filter((l): l is Label => !!l),

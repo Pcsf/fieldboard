@@ -1,0 +1,11 @@
+[
+  {
+    "number": 10, "title": "Crash on launch", "body": "Steps to reproduce:\n1. Open the app\n2. Crash",
+    "labels": [{ "id": "LA_1", "name": "bug" }], "state": "OPEN",
+    "assignees": [{ "id": "U_1", "login": "octocat" }], "url": "https://github.com/acme/widgets/issues/10"
+  },
+  {
+    "number": 11, "title": "Add dark mode", "body": "",
+    "labels": [], "state": "CLOSED", "assignees": [], "url": "https://github.com/acme/widgets/issues/11"
+  }
+]

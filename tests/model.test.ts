@@ -101,7 +101,7 @@ test("filters: AND semantics, description search, due states and fragment roundt
   p.labels.push({id:"bug",name:"Bug",color:"#ff0000"});
   const c = createCard(w, first.id, "Ship", "bottom");
   editCard(w,c.id,{description:"Special text",labels:["bug"],assignees:[w.members[0]!.id],priority:"high",dueDate:"2026-01-02"});
-  const f: Filters = { q:"special",label:"bug",assignee:w.members[0]!.id,priority:"high",due:"overdue",project:p.id,milestone:"",blocked:"",epic:"",board:"",view:"",sort:"",group:"" };
+  const f: Filters = { q:"special",label:"bug",assignee:w.members[0]!.id,priority:"high",due:"overdue",project:p.id,milestone:"",blocked:"",epic:"",board:"",view:"",sort:"",group:"",focus:"" };
   expect(matches(c,f,new Date("2026-01-04T12:00:00"))).toBe(true);
   expect(matches(c,{...f,priority:"urgent"},new Date("2026-01-04"))).toBe(false);
   expect(matches(c,{...f,due:"none"})).toBe(false);

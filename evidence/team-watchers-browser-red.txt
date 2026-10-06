@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/team-watchers-browser.test.ts:
+32 |     await firstColumn.getByRole("button", { name: "Add card at bottom" }).click();
+33 |     await page.getByPlaceholder("Card title").fill("Watch me"); await page.getByPlaceholder("Card title").press("Enter"); await saved(page);
+34 | 
+35 |     // Acting as the default member ("Me"), start watching.
+36 |     await page.getByRole("button", { name: "Open card: Watch me", exact: true }).click();
+37 |     await page.getByRole("button", { name: "Watch this card", exact: true }).click(); await saved(page);
+                                                                                  ^
+TimeoutError: click: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'Watch this card', exact: true })[22m
+
+  log: [ "  - waiting for getByRole('button', { name: 'Watch this card', exact: true })" ],
+
+      at <repo>/tests/team-watchers-browser.test.ts:37:78
+      at processTicksAndRejections (native:7:39)
+(fail) delivered watchers: watching a card notifies the watcher when someone else edits it, in light and dark, desktop and phone [8741.37ms]
+
+ 0 pass
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [8.92s]

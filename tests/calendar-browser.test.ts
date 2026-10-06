@@ -28,10 +28,10 @@ test("delivered calendar view: drag from No due date onto today, persisted dueDa
     await page.locator(".column").first().getByRole("button", { name: "Add card at bottom" }).click();
     await page.getByPlaceholder("Card title").fill("Plan the release"); await page.getByPlaceholder("Card title").press("Enter"); await saved(page);
 
-    await page.getByRole("button", { name: "Calendar", exact: true }).click();
+    await page.getByRole("tab", { name: "Calendar", exact: true }).click();
     expect(page.url()).toContain("view=calendar");
     expect(await page.locator("#board").isHidden()).toBe(true);
-    expect(await page.getByRole("button", { name: "Calendar", exact: true }).getAttribute("aria-pressed")).toBe("true");
+    expect(await page.getByRole("tab", { name: "Calendar", exact: true }).getAttribute("aria-selected")).toBe("true");
     const sidebarCard = page.locator('[data-calendar-nodate]').getByRole("button", { name: "Open card: Plan the release", exact: true });
     await sidebarCard.waitFor();
 
@@ -57,7 +57,7 @@ test("delivered calendar view: drag from No due date onto today, persisted dueDa
     await persistedChip.dragTo(page.locator('[data-calendar-nodate]')); await saved(page);
     expect(await page.locator('[data-calendar-nodate]').getByRole("button", { name: "Open card: Plan the release", exact: true }).count()).toBe(1);
 
-    await page.getByRole("button", { name: "Board", exact: true }).click();
+    await page.getByRole("tab", { name: "Board", exact: true }).click();
     expect(page.url()).not.toContain("view=");
     expect(await page.locator("#board").isHidden()).toBe(false);
 

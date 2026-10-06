@@ -1,0 +1,7 @@
+Headed scroll frame-time probe, final release build, 2026-10-06T10:16Z
+Machine: AMD Ryzen AI 9 HX 470 w/ Radeon 890M, integrated Radeon 890M, Arch Linux (Hyprland, Wayland), 60 Hz display
+Browser: Chromium 152.0.7977.82, headed window 1366x768, 1,000-card fixture
+Method: requestAnimationFrame intervals while scrolling the tallest column top to bottom over 3 s, then the board left to right over 2 s.
+Vertical:   180 frames, median 16.7 ms, p95 16.7 ms, max 16.8 ms, 0 frames over 20 ms, 60 fps
+Horizontal: 120 frames, median 16.7 ms, p95 16.7 ms, max 16.8 ms, 0 frames over 20 ms, 60 fps
+Boundary: rAF cadence measures main-thread frame production on this desktop APU; it is not a mid-range laptop and does not see compositor-only jank.

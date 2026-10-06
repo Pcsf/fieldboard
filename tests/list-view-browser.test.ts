@@ -34,7 +34,7 @@ test("delivered list view: sortable, groupable table honours filters, keeps sort
     await page.getByLabel("Priority", { exact: true }).selectOption("high"); await saved(page);
     await page.getByRole("button", { name: "Close card", exact: true }).click();
 
-    await page.getByRole("button", { name: "List", exact: true }).click();
+    await page.getByRole("tab", { name: "List", exact: true }).click();
     expect(await page.locator(".list-row").count()).toBe(3);
     // Default sort is by title ascending.
     expect(await page.locator(".list-row td:first-child").allTextContents()).toEqual(["Apple task", "Mango task", "Zebra task"]);
@@ -67,7 +67,7 @@ test("delivered list view: sortable, groupable table honours filters, keeps sort
     expect(await page.getByLabel("Title", { exact: true }).inputValue()).toBe("Mango task");
     await page.getByRole("button", { name: "Close card", exact: true }).click();
 
-    await page.getByRole("button", { name: "Board", exact: true }).click();
+    await page.getByRole("tab", { name: "Board", exact: true }).click();
     expect(await page.locator("#board").isVisible()).toBe(true);
     expect(page.url()).not.toContain("view=");
 

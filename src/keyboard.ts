@@ -24,6 +24,7 @@ export const shortcuts: { keys: string; description: string }[] = [
   { keys: "/", description: "Focus search" },
   { keys: "e", description: "Open the focused card" },
   { keys: "← / →", description: "Move the focused card to the previous or next column" },
+  { keys: "Shift+↑ / Shift+↓", description: "Move the focused card up or down within its column" },
   { keys: "j / k", description: "Move focus down or up through cards" },
   { keys: "?", description: "Show this cheatsheet" },
   { keys: "Ctrl+K / Cmd+K", description: "Open the command palette" },

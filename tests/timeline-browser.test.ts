@@ -41,7 +41,7 @@ test("delivered timeline view: bar geometry, dependency arrows and not-scheduled
     await schedule("Ship", addDays(6), addDays(7), "Design");   // starts exactly when Design ends: no conflict
     await schedule("Rush", addDays(2), addDays(3), "Design");   // starts while Design is still open: conflict
 
-    await page.getByRole("button", { name: "Timeline", exact: true }).click();
+    await page.getByRole("tab", { name: "Timeline", exact: true }).click();
     expect(page.url()).toContain("view=timeline");
     expect(await page.locator("#board").isHidden()).toBe(true);
 
@@ -115,7 +115,7 @@ test("delivered timeline view: bar geometry, dependency arrows and not-scheduled
     await page.screenshot({ path: "evidence/timeline-view-dark.png", fullPage: true, animations: "disabled" });
     await page.emulateMedia({ colorScheme: "light" });
 
-    await page.getByRole("button", { name: "Board", exact: true }).click();
+    await page.getByRole("tab", { name: "Board", exact: true }).click();
     expect(page.url()).not.toContain("view=");
 
     expect(errors).toEqual([]); expect(requests).toEqual([]);

@@ -1,0 +1,6 @@
+{
+  "name": "Broken board",
+  "cards": [
+    { "id": "c1", "name": "Orphan card", "idList": "list1" }
+  ]
+}

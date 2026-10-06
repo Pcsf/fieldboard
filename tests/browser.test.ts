@@ -257,5 +257,6 @@ test("performance: built file renders 1000 cards with aging thresholds on every 
 
 test("security: CSP and Markdown cause zero external resource requests or application errors",async()=>{
   expect(requests).toEqual([]);expect(errors).toEqual([]);
-  const csp=await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");expect(csp).toContain("connect-src 'none'");expect(csp).toContain("img-src 'none'");
+  // img-src allows only data: (for attachment thumbnails, stored locally) -- every remote image load is still refused.
+  const csp=await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");expect(csp).toContain("connect-src 'none'");expect(csp).toContain("img-src data:");
 });

@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/team-notifications-browser.test.ts:
+46 |     await page.getByRole("button", { name: "Workspace & members" }).click();
+47 |     await page.getByLabel("Acting as", { exact: true }).selectOption({ label: "Bob" }); await saved(page);
+48 |     await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+49 | 
+50 |     const inboxCount = page.locator("#inbox-count");
+51 |     await inboxCount.waitFor();
+                          ^
+TimeoutError: waitFor: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for locator('#inbox-count') to be visible[22m
+
+  log: [ "  - waiting for locator('#inbox-count') to be visible" ],
+
+      at <repo>/tests/team-notifications-browser.test.ts:51:22
+      at processTicksAndRejections (native:7:39)
+(fail) delivered notifications: mention, assignment and due reminders reach the inbox, are dedupe-stable across reloads, and mark-all-read clears the count [9064.15ms]
+
+ 0 pass
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [9.30s]

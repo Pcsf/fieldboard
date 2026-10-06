@@ -1,0 +1,4 @@
+title,description,column,labels,priority,due,estimate
+Write report,"Quarterly report, final pass",To Do,urgent;report,high,2026-11-01,3
+Fix sensor drift,,Doing,,medium,,
+Ship release,"Final QA ""sign-off"" pass",Done,release;qa,urgent,2026-10-20,5

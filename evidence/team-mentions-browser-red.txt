@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/team-mentions-browser.test.ts:
+36 |     // Also exercises escaping: an unknown trailing name stays plain text next to the real mention.
+37 |     await page.getByLabel("Comment body", { exact: true }).fill("Thanks @Ana Maria for the help, @Nobody not so much");
+38 |     await page.getByRole("button", { name: "Add comment", exact: true }).click(); await saved(page);
+39 | 
+40 |     const chip = page.locator("#detail .comment .mention-chip");
+41 |     await chip.waitFor();
+                    ^
+TimeoutError: waitFor: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for locator('#detail .comment .mention-chip') to be visible[22m
+
+  log: [ "  - waiting for locator('#detail .comment .mention-chip') to be visible" ],
+
+      at <repo>/tests/team-mentions-browser.test.ts:41:16
+      at processTicksAndRejections (native:7:39)
+(fail) delivered mentions: a comment mentioning a member renders as a chip, in light and dark, desktop and phone [8902.34ms]
+
+ 0 pass
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [9.14s]

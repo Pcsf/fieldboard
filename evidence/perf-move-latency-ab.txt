@@ -14,3 +14,34 @@ for all 1000 cards (tests/browser.test.ts "performance" test). Three consecutive
 headless Chromium 152: commitMs 86.5, 87.7, 55.3 (budget stays <100). The aging lookup is an O(1)
 WeakMap-cached index extended incrementally from the activities length already processed, not a
 per-card scan of w.activities or w.cards, so it adds negligible per-card cost over the baseline above.
+
+Move-latency rework (clone/validate cost, see DECISIONS "Move-latency: cheaper clones, no extra
+validation pass"). Method: tests/browser.test.ts run alone (depends on earlier tests in the same
+file), commitMs from evidence/performance.json, src/model.ts and src/storage.ts swapped between
+the optimized and pre-change versions on the same commit otherwise (same machine, same load,
+interleaved where noted) so every number below describes the same fixture and the same feature set.
+
+Bun-side model costs in isolation (scratchpad bench, 1,000-card fixture, before -> after):
+  structuredClone(w.cards) for audit's "before" snapshot:   2.68 ms -> 0.06 ms  (shallow cloneCard)
+  structuredClone(card) x400 for Activity "after" snapshots: 1.88 ms -> 0.02 ms  (shallow cloneCard)
+  Session.change's structuredClone(workspace):                6.6  ms -> ~4.2 ms (cards+activities
+                                                                                   no longer deep-cloned)
+  storage.commit's validateWorkspace(state,false):             8.6  ms -> ~0 ms   (same object Session
+                                                                                   .change already
+                                                                                   validated; WeakSet
+                                                                                   trust cache hits)
+  moveCard (mutation+audit) end to end:                        ~6.5 ms -> ~3.0 ms
+
+Browser commitMs, 4 interleaved pairs, pre-merge code (automation/notifications only, no
+sprints/covers/focus), headless Chromium 152, file run alone:
+  before: 58.4 80.3 82.1 80.2   median 80.3
+  after:  68.1 47.1 67.1 45.9   median 57.6
+
+Browser commitMs after merging main (sprints, card covers/colours, focus mode: more card fields,
+more validateWorkspace/checkCard work, more cardHTML markup per card), same method, 3 runs each:
+  before (main, unoptimized model.ts/storage.ts): 81.8 53.4 80.2   median 80.2
+  after  (merged + this change):                  45.3 67.0 64.7   median 64.7
+  feedbackMs (drag start -> first paint), after:  1.3 1.9 1.3  -- all well under the 50 ms budget.
+
+The 100 ms gate itself is untouched. Full suite (`bun test`, 444 tests on the merged tree) stays
+green before and after -- no behaviour changed, only how much gets copied and re-validated.

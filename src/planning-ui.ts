@@ -57,7 +57,7 @@ export function effortBadge(c: Card): string {
   if (!c.effort) return "";
   const result = estimateModule(c.effort);
   const label = result.architectureGap ? "Architecture gap" : result.ied[1] === 0 ? "IED not sized" : `${formatRange(result.ied)} IED`;
-  return `<span class="ied-badge${result.architectureGap ? " planning-warning" : ""}">${label}${c.effort.sprint ? ` · Sprint ${c.effort.sprint}` : ""}</span>`;
+  return `<span class="ied-badge${result.architectureGap ? " planning-warning" : ""}" aria-hidden="true">${label}${c.effort.sprint ? ` · Sprint ${c.effort.sprint}` : ""}</span>`;
 }
 export function mountEffort(root: HTMLElement, cardId: string, hooks: PlanningHooks) {
   const card = hooks.state().cards.find(c => c.id === cardId)!;

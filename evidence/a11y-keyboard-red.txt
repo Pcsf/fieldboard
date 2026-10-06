@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/a11y-keyboard.test.ts:
+105 |     await walkFocusable(page, "#app", "board view");
+106 |     notes.push("board view: every focusable control reached by Tab");
+107 |     await checkFocusVisible(page, "board view");
+108 | 
+109 |     for (const [tab, name] of [["List", "list view"], ["Calendar", "calendar view"], ["Timeline", "timeline view"], ["Insights", "insights view"]] as const) {
+110 |       await page.getByRole("tab", { name: tab, exact: true }).click();
+                                                                    ^
+TimeoutError: click: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: 'List', exact: true })[22m
+
+  log: [ "  - waiting for getByRole('tab', { name: 'List', exact: true })" ],
+
+      at <repo>/tests/a11y-keyboard.test.ts:110:63
+      at processTicksAndRejections (native:7:39)
+(fail) accessibility: keyboard walk reaches every control, focus stays visible, and Escape closes dialogs and restores focus [16529.89ms]
+
+ 0 pass
+ 1 fail
+ 4 expect() calls
+Ran 1 test across 1 file. [16.75s]

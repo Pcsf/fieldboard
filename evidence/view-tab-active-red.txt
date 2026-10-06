@@ -1,0 +1,21 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/view-tab-active-browser.test.ts:
+19 |     await page.getByRole("button", { name: "New project" }).first().click();
+20 |     await page.getByLabel("Project name").fill("Tabs"); await page.getByRole("button", { name: "Create project" }).click();
+21 |     for (const view of ["List", "Board"]) {
+22 |       await page.getByRole("tab", { name: view, exact: true }).click();
+23 |       const bg = (name: string) => page.getByRole("tab", { name, exact: true }).evaluate(el => getComputedStyle(el).backgroundColor);
+24 |       expect(await bg(view)).not.toBe(await bg(view === "Board" ? "List" : "Board"));
+                                      ^
+error: expect(received).not.toBe(expected)
+
+Expected: not "rgb(255, 255, 255)"
+
+      at <anonymous> (<repo>/tests/view-tab-active-browser.test.ts:24:34)
+(fail) the active view tab is visibly distinct from the inactive ones [619.00ms]
+
+ 0 pass
+ 1 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [838.00ms]

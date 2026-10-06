@@ -137,7 +137,7 @@ export function mountTimeline(root: HTMLElement, deps: TimelineDeps) {
   bindUnscheduled(root, deps); bindToolbar(root, deps);
 }
 function unscheduledSection(layout: TimelineLayout): string {
-  return `<div class="timeline-notscheduled" aria-label="Not scheduled"><h3>Not scheduled <span class="count">${layout.notScheduled.length}</span></h3>${layout.notScheduled.map(notScheduledRow).join("") || '<p class="muted">Every filtered card has both dates.</p>'}</div>`;
+  return `<div class="timeline-notscheduled" aria-label="Not scheduled"><h2>Not scheduled <span class="count">${layout.notScheduled.length}</span></h2>${layout.notScheduled.map(notScheduledRow).join("") || '<p class="muted">Every filtered card has both dates.</p>'}</div>`;
 }
 function bindUnscheduled(root: HTMLElement, deps: TimelineDeps) {
   root.querySelectorAll<HTMLButtonElement>("[data-timeline-card]").forEach(btn => btn.onclick = () => deps.openCard(btn.dataset.timelineCard!));

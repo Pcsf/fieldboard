@@ -1,0 +1,23 @@
+board view: every focusable control reached by Tab
+list view: every focusable control reached by Tab
+calendar view: every focusable control reached by Tab
+timeline view: every focusable control reached by Tab
+insights view: every focusable control reached by Tab
+card detail dialog: focus trapped inside, Escape returns focus to the opening card
+boards dialog: reachable, Escape returns focus to its opener
+milestones dialog: reachable, Escape returns focus to its opener
+sprints dialog: reachable, Escape returns focus to its opener
+planning dialog: reachable, Escape returns focus to its opener
+automation dialog: reachable, Escape returns focus to its opener
+archive dialog: reachable, Escape returns focus to its opener
+column dialog: reachable, Escape returns focus to its opener
+new project dialog: reachable, Escape returns focus to its opener
+notifications inbox: reachable, Escape returns focus to its opener
+members dialog: reachable and keyboard-operable
+snapshots dialog: reachable and keyboard-operable
+help dialog: reachable and keyboard-operable
+import dialog: reachable and keyboard-operable
+shortcuts dialog: opened by "?", every control reachable
+command palette: ArrowDown moves selection, Escape closes and returns focus to its button
+board: ArrowLeft/Right move the focused card between columns from the keyboard
+board: Shift+ArrowUp/Down reorder the focused card within its own column from the keyboard

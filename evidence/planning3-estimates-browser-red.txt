@@ -1,0 +1,24 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/estimates-browser.test.ts:
+25 |     await page.getByRole("button", { name: "Create project", exact: true }).click(); await saved(page);
+26 |     await page.getByRole("button", { name: "Workspace & members" }).click();
+27 |     await page.getByLabel("Member name", { exact: true }).fill("Robin"); await page.getByRole("button", { name: "Add member", exact: true }).click(); await saved(page);
+28 | 
+29 |     // Default unit is points; no explicit selection needed yet.
+30 |     expect(await page.getByLabel("Estimate unit", { exact: true }).inputValue()).toBe("points");
+                                                                        ^
+TimeoutError: inputValue: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByLabel('Estimate unit', { exact: true })[22m
+
+  log: [ "  - waiting for getByLabel('Estimate unit', { exact: true })" ],
+
+      at <repo>/tests/estimates-browser.test.ts:30:68
+      at processTicksAndRejections (native:7:39)
+(fail) delivered estimates: workspace unit, column sums, swimlane sums, archive/move update, unit switch relabels [8601.25ms]
+
+ 0 pass
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [8.82s]

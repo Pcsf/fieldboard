@@ -1,4 +1,12 @@
-import { validateEffort, validatePlanning, validateCalibrations, validateCatalog, defaultCatalog, type Effort, type Planning, type Calibration, type Category } from "./planning";
+import { validateEffort, validatePlanning, validateCalibrations, validateCatalog, validateSprints, defaultCatalog, type Effort, type Planning, type Calibration, type Category, type SprintMeta } from "./planning";
+import { estimateUnits, type EstimateUnit } from "./estimates";
+import { validateTimeEntries, type TimeEntry } from "./time-tracking";
+import { validateRecurrence, type Recurrence } from "./recurring";
+import { validateRule, type Rule } from "./automation";
+import { validateAttachment, isThumbnailType } from "./attachments";
+import { validateLink, type LinkKind } from "./links";
+import { onCardChange, capNotifications, validateNotifications, type Notification } from "./notifications";
+import { validateCardColor } from "./card-style";
 
 export const SCHEMA_VERSION = 2;
 export const priorities = ["none", "low", "medium", "high", "urgent"] as const;
@@ -6,10 +14,10 @@ export type Priority = typeof priorities[number];
 export interface Member { id: string; name: string; color: string }
 export interface Label { id: string; name: string; color: string }
 export interface Milestone { id: string; name: string; date: string; description: string }
-export interface Project { id: string; name: string; description: string; color: string; status: "active" | "archived"; labels: Label[]; planning?: Planning; milestones?: Milestone[] }
+export interface Project { id: string; name: string; description: string; color: string; status: "active" | "archived"; labels: Label[]; planning?: Planning; milestones?: Milestone[]; sprints?: SprintMeta[] }
 export const swimlaneKinds = ["none", "assignee", "priority", "label", "epic"] as const;
 export type Swimlane = typeof swimlaneKinds[number];
-export interface Board { id: string; projectId: string; name: string; swimlane: Swimlane }
+export interface Board { id: string; projectId: string; name: string; swimlane: Swimlane; rules?: Rule[]; autoArchiveDays?: number | null }
 export interface CardTemplate { id: string; name: string; description: string; subtasks: { title: string; position: number }[]; labelNames?: string[]; priority?: Priority }
 export interface BoardTemplateColumn { name: string; wipLimit: number | null; done: boolean; agingDays?: number | null }
 export interface BoardTemplate { id: string; name: string; columns: BoardTemplateColumn[] }
@@ -17,27 +25,33 @@ export interface Column { id: string; boardId: string; name: string; position: n
 export interface Subtask { id: string; title: string; done: boolean; position: number }
 export interface Comment { id: string; author: string; body: string; timestamp: string }
 export interface Attachment { id: string; name: string; type: string; data: string }
-export interface Link { id: string; title: string; url: string }
+export interface Link { id: string; title: string; url: string; kind?: LinkKind; repo?: string; sha?: string; number?: number }
 export interface Blocked { reason: string; since: string }
 export interface Card {
   id: string; columnId: string; position: number; title: string; description: string;
   priority: Priority; dueDate: string | null; estimate: number | null; labels: string[]; assignees: string[];
   effort?: Effort; calibrations?: Calibration[]; milestoneId?: string;
   blocked?: Blocked; blockedBy?: string[]; parentId?: string; startDate?: string;
+  timeEntries?: TimeEntry[]; recurrence?: Recurrence; watchers?: string[];
+  // Sprint membership for a card that carries no IED effort. A card with effort uses effort.sprint
+  // instead (see planning.ts's cardSprintNumber) -- the two fields are never both the operative one
+  // for the same card, so there is still exactly one source of truth per card.
+  sprint?: number | null;
+  cover?: string; color?: string;
   subtasks: Subtask[]; comments: Comment[]; attachments: Attachment[]; links: Link[];
-  createdAt: string; updatedAt: string; completedAt: string | null; archived: boolean;
+  createdAt: string; updatedAt: string; completedAt: string | null; archived: boolean; restoredAt?: string;
 }
 export interface Activity { id: string; cardId: string; actor: string; action: string; before: Card | null; after: Card | null; timestamp: string }
 export const themes = ["system", "light", "dark"] as const;
 export type Theme = typeof themes[number];
 export interface Workspace {
   schemaVersion: number; revision: number; id: string; name: string;
-  members: Member[]; settings: { actorId: string; theme?: Theme };
+  members: Member[]; settings: { actorId: string; theme?: Theme; estimateUnit?: EstimateUnit };
   projects: Project[]; boards: Board[]; columns: Column[]; cards: Card[]; activities: Activity[];
-  catalog?: Category[]; cardTemplates?: CardTemplate[]; boardTemplates?: BoardTemplate[];
+  catalog?: Category[]; cardTemplates?: CardTemplate[]; boardTemplates?: BoardTemplate[]; notifications?: Notification[];
 }
-export interface Filters { q: string; label: string; assignee: string; priority: string; due: string; project: string; milestone: string; blocked: string; epic: string; board: string; view: string; sort: string; group: string }
-export const emptyFilters: Filters = { q: "", label: "", assignee: "", priority: "", due: "", project: "", milestone: "", blocked: "", epic: "", board: "", view: "", sort: "", group: "" };
+export interface Filters { q: string; label: string; assignee: string; priority: string; due: string; project: string; milestone: string; blocked: string; epic: string; board: string; view: string; sort: string; group: string; focus: string }
+export const emptyFilters: Filters = { q: "", label: "", assignee: "", priority: "", due: "", project: "", milestone: "", blocked: "", epic: "", board: "", view: "", sort: "", group: "", focus: "" };
 export const id = () => crypto.randomUUID();
 const now = () => new Date().toISOString();
 function required<T>(item: T | undefined, kind: string): T { if (!item) throw new Error(`${kind} not found`); return item; }
@@ -79,6 +93,7 @@ export function deleteBoard(w: Workspace, boardId: string, destination?: string)
   if (dest) for (const card of cards) moveCardToBoard(w, card.id, dest.id);
   w.columns = w.columns.filter(c => c.boardId !== boardId);
   w.boards = w.boards.filter(b => b.id !== boardId);
+  for (const other of w.cards) if (other.recurrence && columnIds.includes(other.recurrence.columnId)) editCard(w, other.id, { recurrence: undefined });
 }
 export function moveCardToBoard(w: Workspace, cardId: string, boardId: string) {
   const card = required(w.cards.find(c => c.id === cardId), "Card");
@@ -178,18 +193,41 @@ export function deleteMilestone(w: Workspace, projectId: string, milestoneId: st
 }
 export function orderedCards(w: Workspace, columnId: string): Card[] { return w.cards.filter(c => c.columnId === columnId).sort((a, b) => a.position - b.position); }
 function normalize(w: Workspace, columnId: string) { orderedCards(w, columnId).forEach((c, i) => c.position = i); }
+// Every mutator in this file replaces a card's fields wholesale (`Object.assign`/property writes), never
+// mutating a nested array or object (`subtasks`, `comments`, `blocked`, ...) in place -- so a shallow
+// per-card copy is all `audit()` needs to freeze a pre- or post-mutation snapshot. This is ~50x cheaper
+// than `structuredClone` on the 1,000-card fixture (see evidence/perf-move-latency-ab.txt) with no
+// behaviour change, because the only thing that could invalidate it is exactly the pattern this codebase
+// doesn't use.
+function cloneCard(c: Card): Card { return { ...c }; }
 function audit(w: Workspace, before: Card[], action: string) {
   const old = new Map(before.map(c => [c.id, c]));
   const current = new Map(w.cards.map(c => [c.id, c]));
+  const newNotifications: Notification[] = [];
   for (const cardId of new Set([...old.keys(), ...current.keys()])) {
     const a = old.get(cardId) ?? null; const b = current.get(cardId) ?? null;
     if (JSON.stringify(a) === JSON.stringify(b)) continue;
+    newNotifications.push(...onCardChange(w.members, a, b, w.settings.actorId, now()));
     if (b && action !== "undo") b.updatedAt = now();
-    w.activities.push({ id: id(), cardId, actor: w.settings.actorId, action, before: a, after: b ? structuredClone(b) : null, timestamp: now() });
+    w.activities.push({ id: id(), cardId, actor: w.settings.actorId, action, before: a, after: b ? cloneCard(b) : null, timestamp: now() });
   }
+  // Mentions, assignments and watched-card changes ride the same audit pass as the Activity entry
+  // (see DECISIONS "Notifications"); this is also why "undo" generates them like any other action.
+  if (newNotifications.length) w.notifications = capNotifications([...(w.notifications ?? []), ...newNotifications]);
 }
-function mutation<T>(w: Workspace, action: string, fn: () => T): T { const before = structuredClone(w.cards); const result = fn(); audit(w, before, action); return result; }
-export type CardEdit = Partial<Pick<Card, "title" | "description" | "priority" | "dueDate" | "estimate" | "labels" | "assignees" | "subtasks" | "comments" | "effort" | "calibrations" | "milestoneId" | "blocked" | "blockedBy" | "parentId" | "startDate">>;
+function mutation<T>(w: Workspace, action: string, fn: () => T): T { const before = w.cards.map(cloneCard); const result = fn(); audit(w, before, action); return result; }
+// Cards are cloned shallowly (see `cloneCard`); `activities` is append-only and its entries are never
+// mutated after being pushed (see DECISIONS "Activity and undo"), so a fresh array of the same entries
+// is equally safe and skips re-copying the whole history on every mutation. Everything else (members,
+// settings, projects, boards, columns, templates, catalog, notifications) can still be mutated in place
+// by existing code (`project.labels.push`, `Object.assign(column, patch)`, ...), so it keeps a real
+// structured clone.
+export function cloneWorkspace(w: Workspace): Workspace {
+  const { cards, activities, ...rest } = w;
+  const shell = structuredClone(rest) as Omit<Workspace, "cards" | "activities">;
+  return { ...shell, cards: cards.map(cloneCard), activities: activities.slice() };
+}
+export type CardEdit = Partial<Pick<Card, "title" | "description" | "priority" | "dueDate" | "estimate" | "labels" | "assignees" | "subtasks" | "comments" | "attachments" | "links" | "effort" | "calibrations" | "milestoneId" | "blocked" | "blockedBy" | "parentId" | "startDate" | "timeEntries" | "recurrence" | "watchers" | "sprint" | "cover" | "color">>;
 // The optional patch merges into the same creation mutation, so a quick-add card with a label,
 // assignee, priority and due date still produces exactly one Activity entry and one undo step.
 export function createCard(w: Workspace, columnId: string, name: string, at: "top" | "bottom", patch: CardEdit = {}): Card {
@@ -208,9 +246,12 @@ export function resolveLabels(project: Project, names: string[]): string[] {
     return label.id;
   });
 }
-export function editCard(w: Workspace, cardId: string, patch: CardEdit) {
+// `action` defaults to the plain "edit" label; automation rules pass a plain-words description of the
+// rule that fired (e.g. "rule: entering Review assigns Robin") so it reads as a rule event, not a
+// manual edit, in the card's Activity history -- same mutation()/audit() path either way.
+export function editCard(w: Workspace, cardId: string, patch: CardEdit, action = "edit") {
   if (patch.title !== undefined) patch = { ...patch, title: title(patch.title) };
-  mutation(w, "edit", () => Object.assign(required(w.cards.find(c => c.id === cardId), "Card"), structuredClone(patch)));
+  mutation(w, action, () => Object.assign(required(w.cards.find(c => c.id === cardId), "Card"), structuredClone(patch)));
 }
 export function setBlocked(w: Workspace, cardId: string, reason: string | null) {
   const card = required(w.cards.find(c => c.id === cardId), "Card");
@@ -261,7 +302,18 @@ export function moveCardInLane(w: Workspace, cardId: string, columnId: string, i
     else if (swimlane === "label") { const rest = card.labels.filter(l => l !== fromLane); card.labels = toLane === "none" ? rest : [...rest, ...(rest.includes(toLane) ? [] : [toLane])]; }
   });
 }
-export function archiveCard(w: Workspace, cardId: string, archived: boolean) { mutation(w, archived ? "archive" : "restore", () => required(w.cards.find(c => c.id === cardId), "Card").archived = archived); }
+// A restore stamps restoredAt (never completedAt, which insight's throughput/lead/cycle-time and CSV
+// export all read as the actual completion date) so the auto-archive clock can reset without rewriting
+// completion history: otherwise a card restored from an N-days-old completion would be eligible for
+// re-archiving on the very next housekeeping pass instead of getting a fresh N-day window (see
+// DECISIONS "Automation"). `action` lets auto-archive log a plain-words reason instead of "archive".
+export function archiveCard(w: Workspace, cardId: string, archived: boolean, action?: string) {
+  mutation(w, action ?? (archived ? "archive" : "restore"), () => {
+    const card = required(w.cards.find(c => c.id === cardId), "Card");
+    card.archived = archived;
+    if (!archived && card.completedAt) card.restoredAt = now();
+  });
+}
 export function deleteCard(w: Workspace, cardId: string) {
   const card = required(w.cards.find(c => c.id === cardId), "Card");
   mutation(w, "delete", () => {
@@ -270,6 +322,7 @@ export function deleteCard(w: Workspace, cardId: string) {
       if (other.blockedBy?.includes(cardId)) { const rest = other.blockedBy.filter(id => id !== cardId); other.blockedBy = rest.length ? rest : undefined; }
       if (other.parentId === cardId) other.parentId = undefined;
     }
+    if (w.notifications?.some(n => n.cardId === cardId)) w.notifications = w.notifications.filter(n => n.cardId !== cardId);
   });
 }
 export function addColumn(w: Workspace, boardId: string, name: string): Column {
@@ -311,11 +364,14 @@ export function deleteColumn(w: Workspace, columnId: string, destination?: strin
   if (dest) for (const card of cards) moveCard(w, card.id, dest.id, orderedCards(w, dest.id).length);
   w.columns = w.columns.filter(c => c.id !== columnId);
   w.columns.filter(c => c.boardId === col.boardId).sort((a, b) => a.position - b.position).forEach((c, i) => c.position = i);
+  for (const other of w.cards) if (other.recurrence?.columnId === columnId) editCard(w, other.id, { recurrence: undefined });
 }
 export function undoWorkspace(w: Workspace, before: Workspace) {
-  const current = structuredClone(w.cards); const log = w.activities; const revision = w.revision;
+  const current = structuredClone(w.cards); const log = w.activities; const revision = w.revision; const notifications = w.notifications;
   const historicalMembers = w.members.filter(m => log.some(a => a.actor === m.id));
-  Object.assign(w, structuredClone(before), { activities: log, revision });
+  // Notifications are forward-only, like the Activity log they ride alongside: undo must not make an
+  // already-delivered notification disappear (see DECISIONS "Notifications").
+  Object.assign(w, structuredClone(before), { activities: log, revision, notifications });
   for (const member of historicalMembers) if (!w.members.some(m => m.id === member.id)) w.members.push(member);
   audit(w, current, "undo");
 }
@@ -324,8 +380,12 @@ export function dueState(c: Card, at = new Date()): "overdue" | "soon" | "later"
   const remaining = new Date(`${c.dueDate}T23:59:59`).getTime() - at.getTime();
   return remaining < 0 ? "overdue" : remaining <= 48 * 3600_000 ? "soon" : "later";
 }
-export function matches(c: Card, f: Filters, at = new Date()): boolean {
+// `actorId` is the fourth, optional parameter (not inserted earlier in the list) so every existing
+// call site that only ever passed `at` third keeps working unchanged; it is only consulted when
+// `f.focus === "mine"`, which no caller set before this field existed.
+export function matches(c: Card, f: Filters, at = new Date(), actorId?: string): boolean {
   if (c.archived || (f.q && !`${c.title} ${c.description}`.toLocaleLowerCase().includes(f.q.toLocaleLowerCase()))) return false;
+  if (f.focus === "mine" && !(actorId && c.assignees.includes(actorId))) return false;
   if (f.label && !c.labels.includes(f.label)) return false;
   if (f.assignee && !c.assignees.includes(f.assignee)) return false;
   if (f.priority && c.priority !== f.priority) return false;
@@ -374,18 +434,44 @@ function checkCard(value: unknown) {
   if (c.blockedBy !== undefined) ids(c.blockedBy);
   if (c.parentId !== undefined) str(c.parentId, true);
   if (c.blocked !== undefined) { const b = obj(c.blocked); str(b.reason, true); timestamp(b.since); }
+  if (c.timeEntries !== undefined) validateTimeEntries(c.timeEntries);
+  if (c.recurrence !== undefined) validateRecurrence(c.recurrence);
+  if (c.watchers !== undefined) ids(c.watchers);
+  if (c.sprint !== undefined && c.sprint !== null) { integer(c.sprint); if ((c.sprint as number) < 1) fail("invalid sprint number"); }
   timestamp(c.createdAt); timestamp(c.updatedAt); if (c.completedAt !== null) timestamp(c.completedAt);
+  if (c.restoredAt !== undefined) timestamp(c.restoredAt);
   unique(arr(c.subtasks)).forEach(s => { str(s.title, true); bool(s.done); integer(s.position); });
   positions(c.subtasks as Subtask[]);
   unique(arr(c.comments)).forEach(s => { str(s.author, true); str(s.body, true); timestamp(s.timestamp); });
-  unique(arr(c.attachments)).forEach(s => { str(s.name); str(s.type); str(s.data); });
-  unique(arr(c.links)).forEach(s => { str(s.title); str(s.url); });
+  unique(arr(c.attachments)).forEach(validateAttachment);
+  unique(arr(c.links)).forEach(validateLink);
+  // Self-contained, like the start/due-date ordering check above -- both fields live on the same
+  // card, so this can be checked structurally without the workspace-wide relational pass, and it
+  // therefore applies to Activity history too, the same way the date-ordering rule does.
+  if (c.color !== undefined) validateCardColor(c.color);
+  if (c.cover !== undefined) {
+    str(c.cover, true);
+    const attachments = c.attachments as Attachment[];
+    const cover = attachments.find(a => a.id === c.cover);
+    if (!cover) fail("card cover must reference an attachment on the same card");
+    if (!isThumbnailType(cover.type)) fail("card cover must reference an image attachment");
+  }
 }
+// `Session.change` validates the exact object it is about to hand to `Storage.commit` (clone=false in
+// both cases, same reference); since nothing in this codebase mutates a workspace object in place once
+// it has passed validation (every mutator clones before editing -- see `cloneWorkspace`), a second
+// no-clone validation of a reference already in this set is known-good and can return immediately
+// instead of re-walking every card and activity. A clone=true call always re-validates: it is handed
+// untrusted input (import, draft recovery, migration) and its return value is a different object anyway.
+const trustedWorkspaces = new WeakSet<object>();
 export function validateWorkspace(input: unknown, clone = true): Workspace {
+  if (!clone && typeof input === "object" && input !== null && trustedWorkspaces.has(input)) return input as Workspace;
   const w = obj(input); if (w.schemaVersion !== 2) fail("unsupported schema version"); integer(w.revision); str(w.id, true); str(w.name, true);
   const members = unique(arr(w.members)); if (!members.length) fail("member required"); members.forEach(m => { str(m.name, true); color(m.color); });
   const actor = obj(w.settings).actorId; if (!members.some(m => m.id === actor)) fail("unknown actor");
   const theme = obj(w.settings).theme; if (theme !== undefined && !themes.includes(theme as Theme)) fail("invalid theme");
+  const estimateUnit = obj(w.settings).estimateUnit; if (estimateUnit !== undefined && !estimateUnits.includes(estimateUnit as EstimateUnit)) fail("invalid estimate unit");
+  if (w.notifications !== undefined) validateNotifications(w.notifications, members.map(m => m.id as string));
   if (w.catalog !== undefined) validateCatalog(w.catalog);
   const catalog: Category[] = (w.catalog as Category[] | undefined) ?? defaultCatalog;
   if (w.cardTemplates !== undefined) unique(arr(w.cardTemplates)).forEach(t => {
@@ -398,17 +484,26 @@ export function validateWorkspace(input: unknown, clone = true): Workspace {
     str(t.name, true); const cols = arr(t.columns); if (!cols.length) fail("board template needs a column");
     cols.forEach(cv => { const c = obj(cv); str(c.name, true); bool(c.done); if (c.wipLimit !== null) { integer(c.wipLimit); if ((c.wipLimit as number) < 1) fail("WIP limit must be positive"); } if (c.agingDays !== undefined && c.agingDays !== null) { integer(c.agingDays); if ((c.agingDays as number) < 1) fail("Aging threshold must be positive"); } });
   });
-  const projects = unique(arr(w.projects)); projects.forEach(p => { if (p.planning !== undefined) validatePlanning(p.planning); if (p.milestones !== undefined) unique(arr(p.milestones)).forEach(m => { str(m.name, true); isoDate(m.date); str(m.description); }); str(p.name, true); str(p.description); color(p.color); if (!["active", "archived"].includes(p.status as string)) fail("invalid project status"); unique(arr(p.labels)).forEach(l => { str(l.name, true); color(l.color); }); });
+  const projects = unique(arr(w.projects)); projects.forEach(p => { if (p.planning !== undefined) validatePlanning(p.planning); if (p.milestones !== undefined) unique(arr(p.milestones)).forEach(m => { str(m.name, true); isoDate(m.date); str(m.description); }); if (p.sprints !== undefined) validateSprints(p.sprints); str(p.name, true); str(p.description); color(p.color); if (!["active", "archived"].includes(p.status as string)) fail("invalid project status"); unique(arr(p.labels)).forEach(l => { str(l.name, true); color(l.color); }); });
   const boards = unique(arr(w.boards)); boards.forEach(b => { str(b.name, true); if (!projects.some(p => p.id === b.projectId)) fail("orphan board"); if (!swimlaneKinds.includes(b.swimlane as Swimlane)) fail("invalid swimlane"); });
   projects.forEach(p => { if (!boards.some(b => b.projectId === p.id)) fail("project needs a board"); });
   const columns = unique(arr(w.columns)); columns.forEach(c => { str(c.name, true); integer(c.position); bool(c.done); if (c.wipLimit !== null) { integer(c.wipLimit); if ((c.wipLimit as number) < 1) fail("WIP limit must be positive"); } if (c.agingDays !== undefined && c.agingDays !== null) { integer(c.agingDays); if ((c.agingDays as number) < 1) fail("Aging threshold must be positive"); } if (!boards.some(b => b.id === c.boardId)) fail("orphan column"); });
-  boards.forEach(b => { const children = columns.filter(c => c.boardId === b.id); if (!children.length) fail("board needs a column"); positions(children as unknown as Column[]); });
+  boards.forEach(b => {
+    const children = columns.filter(c => c.boardId === b.id); if (!children.length) fail("board needs a column"); positions(children as unknown as Column[]);
+    if (b.rules !== undefined) unique(arr(b.rules)).forEach(r => {
+      validateRule(r);
+      if ("columnId" in r && !children.some(c => c.id === r.columnId)) fail("rule column must be on this board");
+      if (r.kind === "enter-assign-member" && !members.some(m => m.id === r.memberId)) fail("unknown rule assignee");
+    });
+    if (b.autoArchiveDays !== undefined && b.autoArchiveDays !== null) { integer(b.autoArchiveDays); if ((b.autoArchiveDays as number) < 1) fail("Auto-archive days must be positive"); }
+  });
   const cards = unique(arr(w.cards)); const cardsById = new Map(cards.map(c => [c.id as string, c])); cards.forEach(c => {
     checkCard(c); const col = columns.find(x => x.id === c.columnId); if (!col) return fail("orphan card");
     const board = boards.find(b => b.id === col.boardId)!; const project = projects.find(p => p.id === board.projectId)!;
     if ((c.completedAt !== null) !== col.done) fail("completion contradicts column");
     for (const label of ids(c.labels)) if (!(project.labels as Label[]).some(l => l.id === label)) fail("unknown label");
     for (const member of ids(c.assignees)) if (!members.some(m => m.id === member)) fail("unknown assignee");
+    if (c.watchers !== undefined) for (const member of ids(c.watchers)) if (!members.some(m => m.id === member)) fail("unknown watcher");
     for (const comment of c.comments as Comment[]) if (!members.some(m => m.id === comment.author)) fail("unknown comment author");
     if (c.milestoneId !== undefined && !((project.milestones as Milestone[] | undefined) ?? []).some(m => m.id === c.milestoneId)) fail("unknown milestone");
     const projectOf = (other: Record<string, unknown>) => { const oc = columns.find(x => x.id === other.columnId)!; return projects.find(p => p.id === boards.find(b => b.id === oc.boardId)!.projectId)!; };
@@ -424,6 +519,11 @@ export function validateWorkspace(input: unknown, clone = true): Workspace {
       const parentId = c.parentId as string; if (parentId === c.id) fail("card cannot parent itself");
       const other = cardsById.get(parentId); if (!other) fail("unknown parent reference");
       if (projectOf(other).id !== project.id) fail("parent must be in the same project");
+    }
+    if (c.recurrence !== undefined) {
+      const r = c.recurrence as Recurrence; const targetColumn = columns.find(x => x.id === r.columnId);
+      if (!targetColumn) fail("unknown recurrence column");
+      else if (projects.find(p => p.id === boards.find(b => b.id === targetColumn.boardId)!.projectId)!.id !== project.id) fail("recurrence column must be in the same project");
     }
     const effort = c.effort as Effort | undefined;
     if (effort?.category !== undefined && effort.category !== "custom") {
@@ -443,6 +543,7 @@ export function validateWorkspace(input: unknown, clone = true): Workspace {
   checkNoCycle(c => (c.parentId ? [c.parentId as string] : []), "epic cycle");
   columns.forEach(c => positions(cards.filter(x => x.columnId === c.id) as unknown as Card[]));
   unique(arr(w.activities)).forEach(a => { str(a.cardId, true); str(a.actor, true); str(a.action, true); timestamp(a.timestamp); if (!members.some(m => m.id === a.actor)) fail("unknown activity actor"); for (const side of [a.before, a.after]) if (side !== null) { checkCard(side); if (obj(side).id !== a.cardId) fail("activity card mismatch"); } });
+  if (!clone) trustedWorkspaces.add(w);
   return (clone ? structuredClone(input) : input) as Workspace;
 }
 export function migrateWorkspace(input: unknown): Workspace {

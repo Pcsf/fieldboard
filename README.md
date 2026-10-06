@@ -1,6 +1,6 @@
 # Fieldboard
 
-A local kanban workspace delivered as one HTML file. Tier 1 is implemented, but the release is **not accepted** against every requirement in `PROMPT.md`. The remaining acceptance limits are listed below. Tier 2 and Tier 3 remain deferred except for the explicitly requested IED estimation and capacity-planning extension below.
+A local kanban workspace delivered as one HTML file. Every in-scope item of Tiers 1, 2 and 3 in `PROMPT.md` is implemented. The release is still **not accepted** against every acceptance requirement in that prompt: the limits listed below are about how widely it has been verified (per-feature red-first provenance, a mid-range laptop, Firefox, a real screen reader), not about missing features.
 
 External runtime dependencies: zero. The HTML embeds its JavaScript and CSS, uses system fonts, and makes no application network requests. No library, server, account, installation, extension or asset directory is required by the application.
 
@@ -18,6 +18,7 @@ The HTML is the application, not the workspace data. It does not rewrite itself.
 | Browser | Direct-file evidence | Support status |
 |---|---|---|
 | Chromium 152.0.7977.82, Linux | Automated offline `file://` workflow, browser restart, process crash, backups, quota handling and screenshots | Full suite passes headless on an unprivileged Linux desktop with the Chromium sandbox enabled, and in a root container with `--no-sandbox`; a normal headed launch is not yet recorded |
+| Brave, Arch Linux (Hyprland) | Manual direct-file check of the release build: first load, CSV import, card faces with estimate sums, a real image attachment thumbnail, Insights, settings surviving reload (`evidence/release-brave-*.png`) | Checked by hand; the automated suite does not drive Brave |
 | Firefox 155.0.1, Linux | Binary available; application acceptance suite not run | Unverified |
 | Other browsers, operating systems or profiles | No acceptance evidence | Unverified |
 
@@ -25,10 +26,10 @@ The automated suite passes with Chromium’s sandbox enabled on an unprivileged 
 
 Additional open checks:
 
-- 60 fps scrolling on a mid-range physical laptop has not been measured. `evidence/performance.json` records the latest headless 1,000-card move and drag-feedback timing, not a physical-device certification. Threshold tests remain enabled.
-- Screenshots were captured from the isolated delivered file. Full visual, accessibility and motion review is not certified; the installation’s faithful visual verifier is unavailable.
+- Scrolling a 1,000-card board holds 60 fps (no frame over 20 ms) in a headed Chromium window on the development machine, an AMD Ryzen AI 9 HX 470 with integrated Radeon 890M (`evidence/scroll-fps-headed.txt`). A mid-range laptop has not been measured. `evidence/performance.json` records the latest headless move and drag-feedback timing; the threshold tests stay enabled.
+- Accessibility is checked automatically: axe-core reports no violations across every view and dialog in both themes at desktop and phone widths, and a keyboard walk reaches every control and closes every dialog back to its opener (`tests/a11y-*.test.ts`). It has not been tried with a real screen reader. Screenshots come from the isolated delivered file and were reviewed by eye; motion is not certified.
 - Populated schema migration has a fake-IndexedDB automated fixture. A deployed prior-version browser profile migration is not yet certified.
-- Tests were written before the core implementation and regression fixes. Some supplemental browser scenarios were first observed passing after implementation. The prompt’s every-feature-red-first requirement therefore remains open. Initial package configuration also preceded its tests; this ordering error was corrected for subsequent work, not retroactively erased.
+- Tests were written before the core implementation and regression fixes. Some supplemental browser scenarios were first observed passing after implementation. The prompt’s every-feature-red-first requirement therefore remains open. Initial package configuration also preceded its tests; this ordering error was corrected for subsequent work, not retroactively erased. Several Tier 3 features also had their tests written alongside the code; `ISA.md` records which, claim by claim.
 
 A passing `bun test` is the declared verdict on the implemented suite. It does not close these untested release claims. No browser test is silently skipped when Chromium is unavailable; the suite fails.
 
@@ -55,6 +56,10 @@ Deleting a populated column requires a destination, including for archived cards
 Card faces show labels, priority, due date, checklist progress, assignee initials and comment count. Dates are interpreted in local time through the end of the due day. Overdue dates are red; dates within 48 hours are amber. Completed cards are not marked overdue.
 
 Markdown supports headings, bold, italics, code, fenced code, lists, blockquotes and HTTP(S) links. Raw HTML is escaped. Images become text placeholders and are never fetched. Opening an external link is a deliberate browser navigation.
+
+### Card covers and colours
+
+A card's detail view has a **Cover & colour** section, below Attachments. **Cover image** offers every image attachment already on that card (PNG/JPEG/GIF/WebP — the same types the Attachments section thumbnails; nothing else can be a cover); choosing one shows a short image strip at the top of the card's face. Removing that attachment clears the cover automatically, in the same edit. **Card colour** offers a small fixed palette of named colours as swatch buttons; the chosen colour shows as a thin accent stripe down the card's left edge, never behind any text. Both fields are optional and independent of each other.
 
 ### Effort estimation and planning
 
@@ -93,11 +98,11 @@ Planning text autosaves; numeric fields and selections commit when changed or le
 
 ### Sprints view
 
-Open **Sprints** above the board for an allocation view over the same estimated cards: each numbered sprint lists its capacity (labelled Derived from staffing, Direct or Overridden), load including module contingency, headroom and a verdict (Within capacity, Over capacity, or Not quotable when the sprint holds an architecture gap or an unsized card), with the cards assigned to it; an **Unassigned** group lists estimated cards with no sprint number. A sprint's capacity can be overridden there — for a holiday or lab week — independently of the project's derived or direct capacity; clearing the override returns it to that project-level value. A card's sprint can be reassigned from either the Sprints view or the card detail; both go through the same edit.
+Open **Sprints** above the board for a time-boxed view over every card carrying a sprint number — not only estimated ones. Each numbered sprint lists its IED capacity (labelled Derived from staffing, Direct or Overridden), load including module contingency, headroom and a verdict (Within capacity, Over capacity, or Not quotable when the sprint holds an architecture gap, an unsized estimate, or a card with no IED effort at all), with the cards assigned to it; an **Unassigned** group lists *estimated* cards with no sprint number (a non-estimated card with no sprint simply carries no sprint, the same as before this release). A sprint's capacity can be overridden there — for a holiday or lab week — independently of the project's derived or direct capacity; clearing the override returns it to that project-level value. A card's sprint can be reassigned from the Sprints view, the card detail's **Sprint** field (for a card with no IED effort), or its own **Sprint number** field inside Effort estimation (for an estimated card) — all three write the same one field for that card.
 
-Per-sprint overrides apply only in this view, because sprints carry no dates here to apply a holiday or lab week against directly; the milestone overview and the project's calendar/weeks quote use the project's derived or direct capacity without overrides.
+Each sprint also has an optional **Name**, **Start date**, **End date** and **Scope**, editable in the same row. Dates default to a stable, sensible `sprintWeeks`-long window: sprint 1 defaults to the Monday on or before the earliest creation date among cards that have ever carried a sprint number in this project (so the default never drifts as days pass), and every later sprint number follows at that many `sprintWeeks` after it; a sprint's own explicit dates always win over that default. Editing any sprint's dates is not required, but is always available. Below the table, a **What was completed** note and **Close sprint** button close it out: every card in the sprint that is not yet in a done column moves to the next sprint (created automatically if nothing has touched it yet) as one undoable change, cards already done stay exactly where they are, and the sprint is marked closed with its completion note — a closed sprint's fields stop accepting edits. A burnup chart (scope vs. done) sits below each sprint, spanning the sprint's own start-to-end window — extended past the end date to today only while an open sprint has overrun it, never for a closed one — built from the same Activity-replay engine the milestone burnup chart uses, scoped to that sprint number within this project; history from before a sprint's own start date counts toward its opening value rather than being cut off.
 
-The extension adds numbered sprint allocations only. Sprint dates, automatic scheduling, dependencies, rollover, time tracking and the rest of Tier 2/3 remain deferred.
+Per-sprint capacity overrides apply only in this view, because the project's calendar/weeks quote and the milestone overview still use the project's derived or direct capacity without overrides — only the Sprints view itself knows about a specific sprint's shortened or extended capacity.
 
 ### Milestones
 
@@ -146,6 +151,8 @@ Shift-click or Ctrl/Cmd-click (Cmd on macOS) a card face to add it to a multi-se
 ### Find work
 
 Search matches title and description as you type. Label, assignee, priority, due, milestone, blocked and epic filters combine with AND. “Due this week” means the local Monday–Sunday calendar week. Completed cards do not match “overdue.”
+
+The **Focus: my cards** checkbox hides every card not assigned to the acting member (the same "Acting as" identity set in Workspace & members) — in the Board, List, Calendar and Timeline views alike. Column card counts and WIP badges are unaffected by it, the same as every other filter here: they always count the column's non-archived cards, not the currently filtered set.
 
 Filters and the selected project live in the URL fragment. Bookmark the file URL to keep that view. A fragment does not contain workspace data, so it cannot share the workspace with another person.
 
@@ -216,7 +223,7 @@ A conflict journal is not automatically discarded. Export it before manual recov
 
 ### Backups and another computer
 
-**Download backup** exports acknowledged workspace data as JSON: projects, boards, columns, cards, labels, members, settings, subtasks, comments, reserved attachment/link data and all activity, including deleted cards’ history. Session undo, raw text drafts and the snapshot archive are not workspace entities and are not included. The local concurrency revision is reassigned during restore; entity data is preserved.
+**Download backup** exports acknowledged workspace data as JSON: projects, boards, columns, cards, labels, members, settings, subtasks, comments, attachments, links and all activity, including deleted cards’ history. Session undo, raw text drafts and the snapshot archive are not workspace entities and are not included. The local concurrency revision is reassigned during restore; entity data is preserved.
 
 To move the workspace:
 
@@ -242,7 +249,7 @@ localStorage typically has a much smaller quota than IndexedDB. Because this ver
 
 ## Data model and tier status
 
-Workspace owns members, settings, projects, an optional edited IED catalog (categories and subcategories; absent means the built-in catalog), and optional card/board templates. A project owns labels, boards and optional dated milestones. Boards own ordered columns, each with an optional WIP limit, an optional aging threshold in whole days (shows a card's time in that column once it clears the threshold, never in a done column), and a `swimlane` setting (`none`, `assignee`, `priority`, `label` or `epic`; `none` by default) that groups the board into horizontal lanes without changing column WIP counts. Columns own ordered cards. Cards contain subtasks, comments, label/member references, an optional milestone reference, optional IED effort (which may reference a catalog category/subcategory) and calibration records, an optional blocked reason, an optional list of same-project blocker card IDs, an optional same-project parent card ID, an optional start date (must not fall after the due date when both are set), and reserved attachment/link arrays. Projects may contain optional estimation and capacity settings. A card template holds a description, subtasks, label names and an optional priority; a board template holds a column list (name, WIP limit, aging threshold, done flag). Activity references card IDs and retains complete before/after records after deletion. The active board view (Board/List/Calendar/Timeline) is UI navigation state, not workspace data — it lives in the URL fragment's filters alongside search and the other filters, the same way the active project and board do.
+Workspace owns members, settings (including an optional estimate unit, `"points"` or `"hours"`, defaulting to points, that labels the card estimate field and its column/swimlane sum badges), projects, an optional edited IED catalog (categories and subcategories; absent means the built-in catalog), optional card/board templates, and an optional list of notifications (`{id, memberId, kind: "mention"|"assignment"|"due"|"watch", cardId, read, createdAt, dedupeKey?}`, capped at 200 per member, oldest dropped first) — each belongs to one member and shows up only in that member's own inbox. Cards additionally carry an optional list of time entries (`{id, start, end, note?}`; a running entry has `end: null` and only its start is ever stored), with a per-card total shown next to the estimate and on the card face, an optional recurrence (`{frequency: "daily"|"weekly"|"monthly", columnId, next}`) that regenerates the card into a chosen column — on any board of the same project — whenever its `next` date has arrived, an optional list of watcher member IDs, a sprint number for a card with no IED effort (an estimated card keeps using its effort's own sprint number, unchanged), an optional cover (an attachment id, which must name an image attachment on the same card) and an optional colour (one of a fixed named palette). A project owns labels, boards, optional dated milestones and optional per-sprint records (`{number, name?, startDate?, endDate?, scope?, closedAt?, completedSummary?}`, keyed by the same sprint number a card already carries). Boards own ordered columns, each with an optional WIP limit, an optional aging threshold in whole days (shows a card's time in that column once it clears the threshold, never in a done column), and a `swimlane` setting (`none`, `assignee`, `priority`, `label` or `epic`; `none` by default) that groups the board into horizontal lanes without changing column WIP counts. A board also owns an optional list of automation rules (entering a chosen column: check all subtasks, or assign a chosen member; or a per-board overdue rule: add a chosen label to any non-done, non-archived card whose due date has passed), each independently enabled or disabled, and an optional "archive done cards after N days" setting. Columns own ordered cards. Cards contain subtasks, comments, label/member references, an optional milestone reference, optional IED effort (which may reference a catalog category/subcategory) and calibration records, an optional blocked reason, an optional list of same-project blocker card IDs, an optional same-project parent card ID, an optional start date (must not fall after the due date when both are set), an attachment array (files and images stored as data URLs, each capped at 2 MiB) and a link array (URL, git commit, GitHub issue or GitHub PR references), and an optional `restoredAt` timestamp set whenever a card is restored from Archive (completion history stays untouched; auto-archive's clock reads the later of `completedAt` and `restoredAt`). Projects may contain optional estimation and capacity settings. A card template holds a description, subtasks, label names and an optional priority; a board template holds a column list (name, WIP limit, aging threshold, done flag). Activity references card IDs and retains complete before/after records after deletion. The active board view (Board/List/Calendar/Timeline/Insights) is UI navigation state, not workspace data — it lives in the URL fragment's filters (which also carry a "focus: my cards" toggle) alongside search and the other filters, the same way the active project and board do. The cumulative flow diagram, lead/cycle time and throughput shown in the Insights view are all computed on demand from Activity history and live card fields; none of it is stored.
 
 | Scope | Status |
 |---|---|
@@ -250,7 +257,7 @@ Workspace owns members, settings, projects, an optional edited IED catalog (cate
 | Automatic persistence, draft failure handling, JSON backup/restore | Implemented; transactional, reload, crash and browser failure tests |
 | Mandatory snapshots, versioned schema, escaped Markdown, standalone build | Implemented; see acceptance limitations above |
 | Requested project milestones, milestone filter and a capacity-check milestone overview | Implemented extension; domain, calculation-module and offline interaction tests |
-| Per-milestone burnup chart (scope/done, derived from Activity history) | Implemented extension; domain and offline interaction tests. Sprint burnup is not implemented — sprints carry no dates. |
+| Per-milestone and per-sprint burnup charts (scope/done, derived from Activity history, sharing one engine) | Implemented extension; domain and offline interaction tests |
 | Tier 2 WIP limits, blocked state, card dependencies and epics, plus their filters | Implemented; domain and offline interaction tests |
 | Tier 2 keyboard shortcuts (new/open/move/navigate/cheatsheet), fuzzy command palette and quick-add syntax | Implemented; domain/unit and offline interaction tests |
 | Tier 2 multiple boards per project, board switching/add/rename/delete, cross-project My work, card/board templates, bulk card actions | Implemented; domain and offline interaction tests |
@@ -258,11 +265,30 @@ Workspace owns members, settings, projects, an optional edited IED catalog (cate
 | Requested IED estimates, top-level bands, capacity scenarios, numbered sprint allocation and calibration | Implemented extension; domain, persistence and offline interaction tests |
 | Two-level IED catalog (workspace-editable), custom task entry, Lab access factor, direct/overridden sprint capacity and the Sprints view | Implemented extension; domain, migration and offline interaction tests |
 | Light/dark theme (system-following with a System/Light/Dark override) and the phone-width board layout | Implemented extension; domain, token-contrast and offline interaction tests |
+| Tier 3 accessibility: full keyboard operation (including moving a card between and within columns), visible focus, zero unnamed controls, WCAG AA contrast in both themes, automated `axe-core` falsifier | Implemented; domain, token-contrast and axe-core/keyboard-walk offline interaction tests |
 | Tier 3 card aging (per-column aging threshold, card-face age badge, amber then red) | Implemented; domain and offline interaction tests |
-| Tier 3 full sprint lifecycle, recurrence, time tracking, automation, notifications, watchers, attachments/link editing, import formats, board exports and remaining polish | Deferred |
+| Tier 3 Insight: cumulative flow diagram (14/30/90/all-time range), lead/cycle time (median, 85th percentile, distribution, per-card detail view), throughput (cards completed per week, last 12 weeks) | Implemented; domain and offline interaction tests |
+| Tier 3 estimate units and sums (workspace-wide points/hours, column and swimlane sum badges) | Implemented; domain and offline interaction tests |
+| Tier 3 time tracking (start/stop timer, manual entries, per-card total, card-face badge) | Implemented; domain and offline interaction tests |
+| Tier 3 recurring cards (daily/weekly/monthly, catch-up on launch, calendar-date month clamping) | Implemented; domain and offline interaction tests |
+| Tier 3 automation (per-board rules: entering a column checks subtasks or assigns a member, overdue adds a label; per-board auto-archive after N days; both reconciled on the same launch/minute/visibility schedule recurring cards use) | Implemented; domain and offline interaction tests |
+| Tier 3 attachments (drag-drop, paste, file picker; PNG/JPEG/GIF/WebP thumbnails, everything else a file-only chip; 2 MiB cap) and links (URL, git commit, GitHub issue/PR chips) | Implemented; domain and offline interaction tests |
+| Tier 3 import (Trello board JSON, GitHub Issues JSON, CSV) and export (board CSV and Markdown) | Implemented; domain and offline interaction tests |
+| Tier 3 local team organisation: @mentions (description and comments, rendered as chips), a notifications inbox (mention/assignment/due/watched-card, unread count, mark read/all read), and per-card watchers | Implemented; domain and offline interaction tests |
+| Tier 3 time-boxed sprints (optional name/dates/scope per sprint, non-estimated cards can join one, close-out moves unfinished cards forward and records what was completed) | Implemented; domain, migration and offline interaction tests |
+| Tier 3 card covers and custom card colours | Implemented; domain and offline interaction tests |
+| Tier 3 focus mode ("Focus: my cards" in the filter bar, Board/List/Calendar/Timeline) | Implemented; domain and offline interaction tests |
 | Authenticated collaboration, synchronization, hosted APIs, external CLI/webhooks, service-worker packaging | Outside this standalone architecture; not implemented |
 
-Basic native keyboard controls are present for usability, without claiming full Tier 3 accessibility. The phone-width layout (390 px) and theme switching are covered by the automated suite below.
+See "Accessibility" below for full keyboard operation, focus visibility, accessible names and contrast. The phone-width layout (390 px) and theme switching are covered by the automated suite below.
+
+### Accessibility
+
+Every control in every view and every dialog (milestones, sprints, automation, import, notifications inbox, workspace & members, archive, snapshots, help, command palette, and card detail) is reachable and operable with the keyboard alone, with no trap: `Tab`/`Shift+Tab` reach every control, each open dialog keeps focus inside it and returns focus to whatever opened it on close, and `Escape` closes a dialog or the command palette. On the board, `←`/`→` move the focused card to the previous or next column, `Shift+↑`/`Shift+↓` reorder it within its own column, and `j`/`k` move focus between cards without moving one — see `?` for the full shortcut list. Every focusable element shows a visible focus outline in both themes.
+
+Every interactive element has a non-empty accessible name; the cumulative-flow, lead/cycle-time and throughput charts in Insights each carry a text summary alongside the visual chart. Every text/background colour pairing the app defines clears WCAG AA (4.5:1 for normal text, 3:1 for large text and non-text indicators) in both themes, checked directly against the CSS token table by `tests/theme-contrast.test.ts`.
+
+`tests/a11y-axe.test.ts` runs `axe-core` (development-only; see "Dependencies and licences") over every view and every dialog, in both themes, at 1024 px and 390 px, against a realistic fixture (labelled, assigned, blocked and time-tracked cards; a sprint; an automation rule; an unread notification), and asserts zero violations at `serious` or `critical` impact. `tests/a11y-keyboard.test.ts` independently walks the same surfaces by keyboard: it confirms every focusable control is reached by `Tab` alone, focus stays visible, and `Escape` returns focus correctly. A composite card-face button (board, list and timeline rows) carries a short name over a visually richer face and is a documented, narrowly-scoped exception to one `axe-core` rule (`label-content-name-mismatch`) — see DECISIONS.md § "Accessibility" for why.
 
 ### Themes
 
@@ -275,6 +301,18 @@ Before the workspace finishes loading, the page already renders in the operating
 On a phone, the sidebar actions (theme, workspace and members, daily snapshots, backup download, restore and help) sit behind the **Menu** button at the top right. Choosing an action or pressing Escape closes the menu.
 
 At a 390 px viewport the page itself never scrolls horizontally; the board does, across its columns, and the sidebar collapses into a slim top strip instead of filling the screen. A card can be moved to another column from its detail view's **Move to…** control when dragging is impractical — the same control used at any width.
+
+### Attachments and links
+
+A card's detail view has an **Attachments** section: drag files onto it, paste an image or file while the card is open (Ctrl/Cmd+V), or use its **Add file** button. PNG, JPEG, GIF and WebP files show a thumbnail; every other type, including SVG, shows as a plain file chip and is never opened or rendered inline. Each file is capped at 2 MiB — a larger file is refused with a message and nothing is written. **Download** saves the original bytes; **Remove** deletes the attachment. Attachments are stored as data URLs inside the workspace, so they travel in JSON backups and daily snapshots like any other card data, and count toward their size.
+
+The **Links** section holds references of four kinds: a plain URL, a git commit (repository and SHA), or a GitHub issue or pull request (repository and number) — pick the kind, fill in its fields, and press **Add link**. Pasting a `github.com` issue/PR/commit URL into the URL field fills in the right kind automatically. Each reference shows as a chip (for example "PR #42 · owner/repo" or "commit 1a2b3c4"); only `http://`/`https://` links are clickable, opening in a new tab. Nothing about a link ever makes a network request — chips are built entirely from what was typed or pasted.
+
+### Import and export
+
+The sidebar's **Import…** action creates a new project from a file already on your computer: a Trello board export (JSON), a GitHub Issues export (`gh issue list --json number,title,body,labels,state,assignees,url`), or a CSV with a header row (`title,description,column,labels,priority,due,estimate` — `title` is required, other columns are optional, unrecognized columns are ignored, and `labels` is semicolon-separated). A file that can't be read is refused with a message and nothing is imported.
+
+A board's **Export CSV** and **Export Markdown** controls, in the toolbar above the board, download the current board. CSV uses the same columns the importer reads, so exporting and re-importing a board reproduces the same titles, columns, labels, priorities, due dates and estimates. Markdown is a readable summary — the board name, one heading per column, one bullet per card — meant for reading, not for round-tripping back in.
 
 ## Development
 
@@ -311,6 +349,7 @@ No third-party library is bundled into the HTML. Development-only packages are p
 | @types/bun, bun-types | 1.4.2 | MIT |
 | Playwright, playwright-core | 1.63.0 | Apache-2.0 |
 | fake-indexeddb | 6.2.5 | Apache-2.0 |
+| axe-core | 4.14.0 | MPL-2.0 |
 | @types/node | 26.6.3 | MIT |
 | undici-types | 8.9.0 | MIT |
 

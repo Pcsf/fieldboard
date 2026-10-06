@@ -1,0 +1,22 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/theme-contrast.test.ts:
+59 |   // The system-dark block (prefers-color-scheme, no override) must match the explicit dark override exactly.
+60 |   expect(darkSystem).toEqual(darkExplicit);
+61 |   for (const [name, tokens] of [["light", light], ["dark", darkExplicit]] as const) {
+62 |     for (const [fg, bg] of textPairs) {
+63 |       const ratio = contrast(tokens[fg]!, tokens[bg]!);
+64 |       expect(ratio, `${name}: --${fg} on --${bg} = ${ratio.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
+                                                                              ^
+error: light: --muted on --selected-bg = 3.91
+
+Expected: >= 4.5
+Received: 3.9071952333991558
+
+      at <anonymous> (<repo>/tests/theme-contrast.test.ts:64:74)
+(fail) theme tokens: light and dark token tables both clear WCAG AA for every defined status/text pair [2.00ms]
+
+ 1 pass
+ 1 fail
+ 40 expect() calls
+Ran 2 tests across 1 file. [8.00ms]

@@ -1,0 +1,218 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/team-notifications.test.ts:
+125 | }
+126 | 
+127 | test("due reminders: a card due within 24 hours generates exactly one reminder per assignee", () => {
+128 |   const now = new Date("2026-03-10T10:00:00.000Z");
+129 |   const { w, cardId } = dueFixture("2026-03-11"); // within 24h of `now`
+130 |   expect(hasDueReminders(w, now)).toBe(true);
+                                        ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (<repo>/tests/team-notifications.test.ts:130:35)
+(fail) due reminders: a card due within 24 hours generates exactly one reminder per assignee [4.29ms]
+164 | test("due reminders: a changed due date is allowed to remind again", () => {
+165 |   const now = new Date("2026-03-10T10:00:00.000Z");
+166 |   const { w, cardId } = dueFixture("2026-03-11");
+167 |   generateDueReminders(w, now);
+168 |   editCard(w, cardId, { dueDate: "2026-03-12" });
+169 |   expect(hasDueReminders(w, now)).toBe(true);
+                                        ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (<repo>/tests/team-notifications.test.ts:169:35)
+(fail) due reminders: a changed due date is allowed to remind again [0.13ms]
+183 | });
+184 | 
+185 | test("validateWorkspace: rejects a notification referencing an unknown member", () => {
+186 |   const w = createWorkspace();
+187 |   (w as unknown as { notifications: unknown }).notifications = [{ id: "n1", memberId: "ghost", kind: "mention", cardId: "c1", read: false, createdAt: new Date().toISOString() }];
+188 |   expect(() => validateWorkspace(w)).toThrow();
+                                           ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: {
+  schemaVersion: 2,
+  revision: 0,
+  id: "7163b03a-84f8-4125-b3f6-44c988d1e9b4",
+  name: "My workspace",
+  members: [
+    {
+      id: "4a4f66dc-199a-412a-bdf7-2a57cb97073f",
+      name: "Me",
+      color: "#5169bc",
+    }
+  ],
+  settings: {
+    actorId: "4a4f66dc-199a-412a-bdf7-2a57cb97073f",
+  },
+  projects: [],
+  boards: [],
+  columns: [],
+  cards: [],
+  activities: [],
+  notifications: [
+    {
+      id: "n1",
+      memberId: "ghost",
+      kind: "mention",
+      cardId: "c1",
+      read: false,
+      createdAt: "2026-10-06T07:11:51.724Z",
+    }
+  ],
+}
+
+      at <anonymous> (<repo>/tests/team-notifications.test.ts:188:38)
+(fail) validateWorkspace: rejects a notification referencing an unknown member [0.39ms]
+192 |   const w = createWorkspace(); const p = createProject(w, "P");
+193 |   const board = w.boards.find(b => b.projectId === p.id)!;
+194 |   const column = w.columns.filter(c => c.boardId === board.id)[0]!;
+195 |   const card = createCard(w, column.id, "Card", "bottom");
+196 |   (card as unknown as { watchers: string[] }).watchers = ["ghost"];
+197 |   expect(() => validateWorkspace(w)).toThrow();
+                                           ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: {
+  schemaVersion: 2,
+  revision: 0,
+  id: "45e21e05-2f31-48ab-a232-338926bb284b",
+  name: "My workspace",
+  members: [
+    {
+      id: "53ee9fb3-11f6-465c-abad-f1e2691bd780",
+      name: "Me",
+      color: "#5169bc",
+    }
+  ],
+  settings: {
+    actorId: "53ee9fb3-11f6-465c-abad-f1e2691bd780",
+  },
+  projects: [
+    {
+      id: "c737f1d9-03c7-4b84-ab34-50da0571ca00",
+      name: "P",
+      description: "",
+      color: "#667b68",
+      status: "active",
+      labels: [],
+    }
+  ],
+  boards: [
+    {
+      id: "5657d641-9457-4eab-8092-4e2d6e3724a4",
+      projectId: "c737f1d9-03c7-4b84-ab34-50da0571ca00",
+      name: "Board",
+      swimlane: "none",
+    }
+  ],
+  columns: [
+    {
+      id: "11346896-69ea-4f56-af6d-c73e8016a013",
+      boardId: "5657d641-9457-4eab-8092-4e2d6e3724a4",
+      name: "Backlog",
+      position: 0,
+      wipLimit: null,
+      done: false,
+    }, {
+      id: "e30b0ede-50b1-41a5-b449-b301cd2c6a54",
+      boardId: "5657d641-9457-4eab-8092-4e2d6e3724a4",
+      name: "To Do",
+      position: 1,
+      wipLimit: null,
+      done: false,
+    }, {
+      id: "a00508ad-54ea-46ba-bade-c8bd353528fa",
+      boardId: "5657d641-9457-4eab-8092-4e2d6e3724a4",
+      name: "In Progress",
+      position: 2,
+      wipLimit: null,
+      done: false,
+    }, {
+      id: "336b3938-7461-477b-90e5-4b02177c0221",
+      boardId: "5657d641-9457-4eab-8092-4e2d6e3724a4",
+      name: "Review",
+      position: 3,
+      wipLimit: null,
+      done: false,
+    }, {
+      id: "cf8c9af6-46ec-4802-8785-b8ca20973c32",
+      boardId: "5657d641-9457-4eab-8092-4e2d6e3724a4",
+      name: "Done",
+      position: 4,
+      wipLimit: null,
+      done: true,
+    }
+  ],
+  cards: [
+    {
+      id: "0550cab2-6c74-4c52-a197-20a47da204c9",
+      columnId: "11346896-69ea-4f56-af6d-c73e8016a013",
+      position: 0,
+      title: "Card",
+      description: "",
+      priority: "none",
+      dueDate: null,
+      estimate: null,
+      labels: [],
+      assignees: [],
+      subtasks: [],
+      comments: [],
+      attachments: [],
+      links: [],
+      createdAt: "2026-10-06T07:11:51.724Z",
+      updatedAt: "2026-10-06T07:11:51.724Z",
+      completedAt: null,
+      archived: false,
+      watchers: [ "ghost" ],
+    }
+  ],
+  activities: [
+    {
+      id: "042fbdc7-04f7-4d94-bbed-5ca8cd5dd099",
+      cardId: "0550cab2-6c74-4c52-a197-20a47da204c9",
+      actor: "53ee9fb3-11f6-465c-abad-f1e2691bd780",
+      action: "create",
+      before: null,
+      after: {
+        id: "0550cab2-6c74-4c52-a197-20a47da204c9",
+        columnId: "11346896-69ea-4f56-af6d-c73e8016a013",
+        position: 0,
+        title: "Card",
+        description: "",
+        priority: "none",
+        dueDate: null,
+        estimate: null,
+        labels: [],
+        assignees: [],
+        subtasks: [],
+        comments: [],
+        attachments: [],
+        links: [],
+        createdAt: "2026-10-06T07:11:51.724Z",
+        updatedAt: "2026-10-06T07:11:51.724Z",
+        completedAt: null,
+        archived: false,
+      },
+      timestamp: "2026-10-06T07:11:51.724Z",
+    }
+  ],
+}
+
+      at <anonymous> (<repo>/tests/team-notifications.test.ts:197:38)
+(fail) validateWorkspace: rejects a card watcher that is not a known member [0.73ms]
+
+ 17 pass
+ 4 fail
+ 32 expect() calls
+Ran 21 tests across 1 file. [15.00ms]

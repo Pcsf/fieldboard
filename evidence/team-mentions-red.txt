@@ -1,0 +1,36 @@
+bun test v1.4.0 (34cbb9a40)
+
+tests/team-mentions.test.ts:
+66 |     { id: "evil-1", name: "<img src=x onerror=alert(1)>" },
+67 |     { id: "evil-2", name: '">' },
+68 |   ];
+69 |   const html = markdown("Hello @<img src=x onerror=alert(1)> and @\">", evilMembers);
+70 |   expect(html).not.toContain("<img"); // only the escaped &lt;img ... form may appear, never a real tag
+71 |   expect(html).toContain("mention-chip");
+                    ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "mention-chip"
+Received: "<p>Hello @&lt;img src=x onerror=alert(1)&gt; and @&quot;&gt;</p>"
+
+      at <anonymous> (<repo>/tests/team-mentions.test.ts:71:16)
+(fail) mentions render as chips through markdown, and malicious member names stay inert [0.40ms]
+78 |   expect(html).toContain("@Nobody");
+79 | });
+80 | 
+81 | test("markdown renders a known mention as a chip carrying the member's name", () => {
+82 |   const html = markdown("Hi @Ana Maria, any update?", members);
+83 |   expect(html).toContain("mention-chip");
+                    ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "mention-chip"
+Received: "<p>Hi @Ana Maria, any update?</p>"
+
+      at <anonymous> (<repo>/tests/team-mentions.test.ts:83:16)
+(fail) markdown renders a known mention as a chip carrying the member's name [0.03ms]
+
+ 11 pass
+ 2 fail
+ 23 expect() calls
+Ran 13 tests across 1 file. [7.00ms]

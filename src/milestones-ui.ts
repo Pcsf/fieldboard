@@ -7,7 +7,7 @@ import { escapeHTML as esc } from "./markdown";
 
 export function milestoneChip(card: Card, milestones: Milestone[] | undefined): string {
   const m = card.milestoneId ? milestones?.find(x => x.id === card.milestoneId) : undefined;
-  return m ? `<span class="milestone-chip" title="Milestone: ${esc(m.name)} (${esc(m.date)})">◆ ${esc(m.name)}</span>` : "";
+  return m ? `<span class="milestone-chip" aria-hidden="true" title="Milestone: ${esc(m.name)} (${esc(m.date)})">◆ ${esc(m.name)}</span>` : "";
 }
 function dueLabel(days: number): string {
   return days < 0 ? `${-days} day${days === -1 ? "" : "s"} overdue` : days === 0 ? "Due today" : `${days} day${days === 1 ? "" : "s"} remaining`;

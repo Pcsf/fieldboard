@@ -77,7 +77,7 @@ test("delivered boards: add, switch, rename, delete with destination, board/card
     // Save the active (first) board as a template, then create a new board from it.
     await page.getByRole("button", { name: "Boards", exact: true }).click();
     await boardRow(page, "Board").getByLabel(/Template name for board/).fill("Standard flow");
-    await boardRow(page, "Board").getByRole("button", { name: /Save board .* as template/ }).click(); await saved(page);
+    await boardRow(page, "Board").getByRole("button", { name: /Save as template: board .*/ }).click(); await saved(page);
     expect(await page.locator(".section-label", { hasText: "BOARD TEMPLATES" }).count()).toBe(1);
     await page.getByLabel("New board name", { exact: true }).fill("From template");
     await page.getByLabel("Start new board from template", { exact: true }).selectOption({ label: "Standard flow" });

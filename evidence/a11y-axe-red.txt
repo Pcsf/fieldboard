@@ -1,0 +1,21 @@
+=== BOARD VIEW, LIGHT, PRE-FIX SOURCE TREE ===
+[
+  {
+    "id": "aria-required-children",
+    "impact": "critical",
+    "count": 1,
+    "example": "<div class=\"view-tabs\" role=\"tablist\" aria-label=\"View\">"
+  },
+  {
+    "id": "color-contrast",
+    "impact": "serious",
+    "count": 27,
+    "example": "<small>LOCAL WORKSPACE</small>"
+  },
+  {
+    "id": "label-content-name-mismatch",
+    "impact": "serious",
+    "count": 9,
+    "example": "<button id=\"inbox-button\" aria-label=\"Notifications\" title=\"Notifications\">✉ <span id=\"inbox-count\" class=\"count\">1</span></button>"
+  }
+]

@@ -1,4 +1,5 @@
 import { editCard, id, type Card, type Workspace } from "./model";
+import { burnupInWindow, parseLocalISO, type BurnupPoint } from "./burnup";
 
 export type Range = [number, number];
 export interface Factors { spec: number; clock: number; utilization: number; reuse: number; verification: number; lab?: number }
@@ -330,21 +331,27 @@ export function sprintLoads(w: Workspace, projectId: string) {
   return [...groups.values()].sort((a, b) => a.sprint - b.sprint).map(g => ({ ...g, capacity, overloaded: g.ied[1] > capacity }));
 }
 export type CapacitySource = "derived" | "direct" | "overridden";
-export interface SprintCard { card: Card; estimate: ModuleEstimate }
+// `estimate` is absent for a card with no IED effort -- such a card can still be a sprint member
+// (see cardSprintNumber above), it just carries no IED load and flags its sprint "not quotable",
+// the same way an unsized effort card already does.
+export interface SprintCard { card: Card; estimate?: ModuleEstimate }
 export interface SprintGroup { sprint: number; capacity: number; capacitySource: CapacitySource; ied: Range; cards: SprintCard[]; architectureGap: boolean; unestimated: number; verdict: "within" | "over" | "not quotable" }
 export function sprintBoard(w: Workspace, projectId: string): { sprints: SprintGroup[]; unassigned: Card[] } {
   const project = w.projects.find(p => p.id === projectId); const p = project?.planning ?? defaultPlanning();
   const baseCapacity = 5 * p.sprintWeeks * capacityPerWorkingDay(p);
   const groups = new Map<number, SprintCard[]>(); const unassigned: Card[] = [];
   for (const c of projectCards(w, projectId)) {
-    if (!c.effort) continue;
-    if (c.effort.sprint === null) { unassigned.push(c); continue; }
-    const list = groups.get(c.effort.sprint) ?? []; list.push({ card: c, estimate: estimateModule(c.effort) }); groups.set(c.effort.sprint, list);
+    const n = cardSprintNumber(c);
+    if (n === null) { if (c.effort) unassigned.push(c); continue; }
+    const list = groups.get(n) ?? []; list.push({ card: c, estimate: c.effort ? estimateModule(c.effort) : undefined }); groups.set(n, list);
   }
   const sprints = [...groups.keys()].sort((a, b) => a - b).map(n => {
     const list = groups.get(n)!;
     let ied: Range = [0, 0]; let architectureGap = false; let unestimated = 0;
-    for (const { estimate } of list) { ied = plus(ied, scale(estimate.ied, 1 + p.contingency)); architectureGap ||= estimate.architectureGap; if (estimate.ied[1] === 0) unestimated++; }
+    for (const { estimate } of list) {
+      if (!estimate) { unestimated++; continue; }
+      ied = plus(ied, scale(estimate.ied, 1 + p.contingency)); architectureGap ||= estimate.architectureGap; if (estimate.ied[1] === 0) unestimated++;
+    }
     const override = p.sprintOverrides?.[String(n)];
     const capacity = override ?? baseCapacity;
     const capacitySource: CapacitySource = override !== undefined ? "overridden" : p.capacityMode === "direct" ? "direct" : "derived";
@@ -361,8 +368,145 @@ export function setSprintOverride(w: Workspace, projectId: string, sprint: numbe
   if (capacity === null) delete overrides[String(sprint)]; else { number(capacity, 0, 1e6); overrides[String(sprint)] = capacity; }
   project.planning = { ...project.planning, sprintOverrides: overrides };
 }
+// Membership lives in exactly one place per card: a card with IED effort keeps using
+// effort.sprint (unchanged since the original sprint-capacity release, so every existing
+// allocation, override and calibration keeps computing the same numbers); a card with no effort
+// uses the plain top-level Card.sprint field added for this release. cardSprintNumber is the one
+// place that knows which field is operative for a given card -- every reader goes through it.
+export function cardSprintNumber(card: Pick<Card, "effort" | "sprint">): number | null {
+  if (card.effort) return card.effort.sprint;
+  return card.sprint ?? null;
+}
 export function setCardSprint(w: Workspace, cardId: string, sprint: number | null) {
-  const c = w.cards.find(c => c.id === cardId); if (!c?.effort) throw new Error("Estimate this card before assigning a sprint");
+  const c = w.cards.find(c => c.id === cardId); if (!c) throw new Error("Card not found");
   if (sprint !== null && (!Number.isInteger(sprint) || sprint < 1)) throw new Error("Sprint must be a positive integer");
-  editCard(w, cardId, { effort: { ...c.effort, sprint } });
+  if (c.effort) editCard(w, cardId, { effort: { ...c.effort, sprint } });
+  else editCard(w, cardId, { sprint });
+}
+export interface SprintMeta { number: number; name?: string; startDate?: string; endDate?: string; scope?: string; closedAt?: string | null; completedSummary?: string }
+function isoLike(x: unknown, label: string): asserts x is string {
+  if (typeof x !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(x) || Number.isNaN(Date.parse(`${x}T12:00:00Z`))) throw new Error(`${label} must be a calendar date`);
+}
+export function validateSprints(input: unknown): asserts input is SprintMeta[] {
+  if (!Array.isArray(input)) throw new Error("Invalid sprint list");
+  const seen = new Set<number>();
+  for (const value of input) {
+    const s = object(value);
+    number(s.number, 1, 1e6); if (!Number.isInteger(s.number)) throw new Error("Sprint number must be an integer");
+    if (seen.has(s.number as number)) throw new Error("Duplicate sprint number"); seen.add(s.number as number);
+    if (s.name !== undefined) text(s.name);
+    if (s.scope !== undefined) text(s.scope);
+    if (s.startDate !== undefined) isoLike(s.startDate, "Sprint start date");
+    if (s.endDate !== undefined) isoLike(s.endDate, "Sprint end date");
+    if (s.startDate !== undefined && s.endDate !== undefined && (s.startDate as string) > (s.endDate as string)) throw new Error("Sprint start date after end date");
+    if (s.closedAt !== undefined && s.closedAt !== null) { text(s.closedAt); if (!Number.isFinite(Date.parse(s.closedAt as string))) throw new Error("Invalid sprint close timestamp"); }
+    if (s.completedSummary !== undefined) text(s.completedSummary);
+  }
+}
+function addDaysISO(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const date = new Date(Date.UTC(y!, m! - 1, d!)); date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+export interface SprintWindow { number: number; name: string; startDate: string; endDate: string; scope: string; closedAt: string | null; completedSummary: string; explicitDates: boolean }
+// Pure and deterministic given `anchorDate` (sprint 1's default start, computed once by
+// sprintAnchorDate below and passed in -- never recomputed per sprint number, and never from
+// `today` directly, so defaults are stable and don't drift as days pass). Sprint N's default start
+// is `anchorDate + (N-1) x sprintWeeks`; a sprint with its own explicit dates always wins over that
+// default, and chaining off any *other* sprint's dates was deliberately dropped (see DECISIONS
+// "Time-boxed sprints") in favour of this one fixed anchor, so every sprint's default is independent
+// of whether some other sprint happens to have been edited.
+export function sprintWindow(metas: SprintMeta[], sprintWeeks: number, sprintNumber: number, anchorDate: string): SprintWindow {
+  const meta = metas.find(m => m.number === sprintNumber);
+  const spanDays = Math.max(1, Math.round(sprintWeeks * 7));
+  const defaultStart = addDaysISO(anchorDate, (sprintNumber - 1) * spanDays);
+  const startDate = meta?.startDate ?? defaultStart;
+  const endDate = meta?.endDate ?? addDaysISO(startDate, spanDays - 1);
+  return { number: sprintNumber, name: meta?.name ?? "", startDate, endDate, scope: meta?.scope ?? "", closedAt: meta?.closedAt ?? null, completedSummary: meta?.completedSummary ?? "", explicitDates: !!(meta?.startDate && meta?.endDate) };
+}
+function mondayOnOrBefore(d: Date): string {
+  const day = new Date(d); day.setHours(0, 0, 0, 0);
+  const dow = day.getDay(); // 0 = Sunday .. 6 = Saturday
+  day.setDate(day.getDate() - (dow === 0 ? 6 : dow - 1));
+  return day.toLocaleDateString("en-CA");
+}
+// The single anchor every sprint's default window is built from (see sprintWindow above). Stable
+// by construction: it is the Monday on or before the earliest createdAt among cards that have ever
+// carried a sprint number in this project -- "ever" means live state or any Activity before/after
+// snapshot, not just the card's current sprint, so reassigning or closing a sprint later never
+// moves the anchor. Only when no card has ever carried one does it fall back to the Monday of
+// today's week, which does shift day to day -- there being nothing in the data yet to anchor on.
+export function sprintAnchorDate(w: Workspace, projectId: string, today: Date): string {
+  const activitiesByCard = new Map<string, { before: Card | null; after: Card | null }[]>();
+  for (const a of w.activities) {
+    const list = activitiesByCard.get(a.cardId); const entry = { before: a.before, after: a.after };
+    if (list) list.push(entry); else activitiesByCard.set(a.cardId, [entry]);
+  }
+  let earliest: string | null = null;
+  for (const c of projectCards(w, projectId)) {
+    const everInSprint = cardSprintNumber(c) !== null
+      || (activitiesByCard.get(c.id) ?? []).some(e => (e.before && cardSprintNumber(e.before) !== null) || (e.after && cardSprintNumber(e.after) !== null));
+    if (everInSprint && (earliest === null || c.createdAt < earliest)) earliest = c.createdAt;
+  }
+  return mondayOnOrBefore(earliest ? new Date(earliest) : today);
+}
+export function setSprintMeta(w: Workspace, projectId: string, sprintNumber: number, patch: Partial<Pick<SprintMeta, "name" | "startDate" | "endDate" | "scope">>) {
+  const project = w.projects.find(p => p.id === projectId); if (!project) throw new Error("Project not found");
+  if (!Number.isInteger(sprintNumber) || sprintNumber < 1) throw new Error("Sprint must be a positive integer");
+  const sprints = project.sprints ? [...project.sprints] : [];
+  const i = sprints.findIndex(s => s.number === sprintNumber);
+  const next: SprintMeta = { ...(i >= 0 ? sprints[i]! : { number: sprintNumber }), ...patch };
+  if (next.name !== undefined) next.name = next.name.trim();
+  if (next.startDate !== undefined) isoLike(next.startDate, "Sprint start date");
+  if (next.endDate !== undefined) isoLike(next.endDate, "Sprint end date");
+  if (next.startDate && next.endDate && next.startDate > next.endDate) throw new Error("Sprint start date after end date");
+  if (i >= 0) sprints[i] = next; else sprints.push(next);
+  project.sprints = sprints.sort((a, b) => a.number - b.number);
+}
+const sprintNow = () => new Date().toISOString();
+// Closing a sprint moves every unfinished card on it to the next sprint (creating that sprint's
+// metadata entry if nothing has touched it yet) and marks the sprint itself closed with a summary
+// of what was completed. The card moves go through the normal setCardSprint -> editCard ->
+// mutation() path, so each one lands in Activity individually and is undoable; the sprint-metadata
+// change (closedAt/completedSummary) is not itself an Activity entry, the same way a milestone edit
+// isn't (see DECISIONS "Milestones") -- it is still covered by the one calling stage()/session.change,
+// so from the app's perspective closing a sprint is one undo step, same as a bulk action.
+export function closeSprint(w: Workspace, projectId: string, sprintNumber: number, summary: string): { moved: number; completed: number } {
+  const project = w.projects.find(p => p.id === projectId); if (!project) throw new Error("Project not found");
+  if (!Number.isInteger(sprintNumber) || sprintNumber < 1) throw new Error("Sprint must be a positive integer");
+  const existing = project.sprints?.find(s => s.number === sprintNumber);
+  if (existing?.closedAt) throw new Error("Sprint is already closed");
+  const cards = projectCards(w, projectId).filter(c => cardSprintNumber(c) === sprintNumber);
+  const unfinished = cards.filter(c => c.completedAt === null);
+  const nextNumber = sprintNumber + 1;
+  if (!project.sprints?.some(s => s.number === nextNumber)) setSprintMeta(w, projectId, nextNumber, {});
+  for (const c of unfinished) setCardSprint(w, c.id, nextNumber);
+  const sprints = [...(project.sprints ?? [])];
+  const i = sprints.findIndex(s => s.number === sprintNumber);
+  const closed: SprintMeta = { ...(i >= 0 ? sprints[i]! : { number: sprintNumber }), closedAt: sprintNow(), completedSummary: summary.trim() };
+  if (i >= 0) sprints[i] = closed; else sprints.push(closed);
+  project.sprints = sprints.sort((a, b) => a.number - b.number);
+  return { moved: unfinished.length, completed: cards.length - unfinished.length };
+}
+// Sprint numbers are only meaningful within one project (sprint 1 in project A has nothing to do
+// with sprint 1 in project B), unlike a milestone id, which is already globally unique. A historical
+// Activity snapshot carries no project pointer of its own, so project scope is decided from the
+// *current* set of columns belonging to this project (the same "current structure, historical
+// state" choice src/cfd.ts already makes for cross-board moves and deleted columns) -- a card whose
+// snapshot names a column since moved to another project, or deleted outright, drops out of scope
+// for this chart rather than guessing which project it meant at the time.
+//
+// The x-axis is the sprint's own window, not the data's: burnupInWindow (src/burnup.ts) always
+// draws every day from `startDate` through the window's end, whether or not any card ever carried
+// the sprint. A closed sprint's window ends at its own endDate even if today is later (the sprint
+// stopped moving then); an open sprint's window extends past endDate to today when the sprint has
+// overrun, but never shrinks to stop short of endDate while today hasn't reached it yet.
+export function sprintBurnup(w: Workspace, projectId: string, sprintNumber: number, startDate: string, endDate: string, closed: boolean, today: Date = new Date()): BurnupPoint[] {
+  const projectColumnIds = new Set(w.columns.filter(col => w.boards.some(b => b.id === col.boardId && b.projectId === projectId)).map(col => col.id));
+  const inScope = (state: Card) => projectColumnIds.has(state.columnId) && cardSprintNumber(state) === sprintNumber;
+  const start = parseLocalISO(startDate);
+  const endOfWindow = parseLocalISO(endDate);
+  const todayDay = new Date(today); todayDay.setHours(0, 0, 0, 0);
+  const end = !closed && todayDay.getTime() > endOfWindow.getTime() ? todayDay : endOfWindow;
+  return burnupInWindow(w, inScope, start, end);
 }

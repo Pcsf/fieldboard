@@ -9,7 +9,8 @@ External runtime dependencies: zero. The HTML embeds its JavaScript and CSS, use
 1. Copy `dist/fieldboard.html` to a stable location on your computer.
 2. Open it directly in your browser using `file://`. Do not use a private browsing window for durable work.
 3. Check the storage indicator. If storage is unavailable, the app shows an error and refuses edits.
-4. Create a project and add cards. Download a JSON backup regularly.
+4. Create a project and add cards.
+5. In the sidebar's storage card, choose **Choose folder…** and pick a folder of your own. From then on every acknowledged change is also written to `fieldboard.json` in that folder (see *Save to a folder* below). Where the folder picker is unavailable, turn on **Auto-backup downloads** instead.
 
 The HTML is the application, not the workspace data. It does not rewrite itself. Copying the HTML alone does not move your work.
 
@@ -221,6 +222,18 @@ If a write fails:
 
 A conflict journal is not automatically discarded. Export it before manual recovery. Do not clear browser data as a first troubleshooting step.
 
+### Save to a folder
+
+Browser storage is not always durable: a managed work computer may clear site data every time the browser closes, which takes the IndexedDB workspace and the localStorage journals with it. Saving to a folder keeps a copy you own, on disk, in the same JSON format as a backup.
+
+**Choose folder…** (sidebar storage card, the welcome screen's **Open workspace folder**, or the command palette) opens the browser's folder picker. After you grant read and write access, the app writes `fieldboard.json` into that folder, and from then on mirrors every acknowledged change there, coalesced so a burst of edits becomes one write. Each local day also gets one dated copy, `fieldboard-YYYY-MM-DD.json`, and the newest seven dated copies are kept; no other file in the folder is ever touched. Both files restore with **Restore JSON backup**. The status pill reads **Saved to folder** once the file is current and **Saving to folder…** while a write is pending; a failed write shows a banner with a retry, while the browser copy stays saved.
+
+On the next launch the app reconnects to the stored folder. If the browser needs permission again, a banner offers **Reconnect folder** (browsers only grant file access from a click). If the browser forgot everything, the welcome screen offers **Open workspace folder**: pick the same folder and the file is loaded, with no confirmation when the browser holds no work yet. When both the browser and the file hold work and they differ, the app shows both sides' last-change times and asks which to keep; keeping the browser's version first saves the folder's current file as `fieldboard-conflict-<time>.json`. A `fieldboard.json` that is not a valid workspace is never overwritten; the app refuses to connect and asks you to move it aside.
+
+The folder picker is the File System Access API, available in Chrome and Edge on a `file://` page (Brave ships it disabled behind `brave://flags/#file-system-access-api`; Firefox and Safari do not have it). An enterprise policy can block it (`DefaultFileSystemWriteGuardSetting`, `FileSystemWriteBlockedForUrls`, visible at `chrome://policy` or `edge://policy`); the app reports a blocked picker and offers the fallback below. The folder handle is stored in the same IndexedDB as the workspace, so a browser that wipes site data also forgets the folder: picking it again each session is the whole cost.
+
+**Auto-backup downloads** is the fallback that needs no special API: a checkbox in the storage card, stored with the workspace (so it travels inside the JSON and stays on once you open your own file). While it is on, the app saves the acknowledged workspace as an ordinary download, `fieldboard-YYYY-MM-DD-HHMM.json`, at most once every fifteen minutes while there are changes, and right away when the tab is hidden; **Download now** forces one. The browser may ask once to allow multiple automatic downloads. A browser set to *ask where to save each file before downloading* opens its Save As dialog for every backup; turn that setting off (Downloads settings) so the files land in the download folder silently, or use the folder mode, which never asks again after the first pick. Closing the tab with a download still pending triggers the usual leave-page warning. On the next launch, **Open backup file** on the welcome screen opens the newest file.
+
 ### Backups and another computer
 
 **Download backup** exports acknowledged workspace data as JSON: projects, boards, columns, cards, labels, members, settings, subtasks, comments, attachments, links and all activity, including deleted cards’ history. Session undo, raw text drafts and the snapshot archive are not workspace entities and are not included. The local concurrency revision is reassigned during restore; entity data is preserved.
@@ -255,6 +268,7 @@ Workspace owns members, settings (including an optional estimate unit, `"points"
 |---|---|
 | Tier 1 board/column operations, card details, ordering, archive/delete, filters, undo, local identities and activity | Implemented; domain and direct-file browser coverage |
 | Automatic persistence, draft failure handling, JSON backup/restore | Implemented; transactional, reload, crash and browser failure tests |
+| Save to a folder (File System Access), auto-backup downloads | Implemented; in-memory handle tests plus a real-handle browser test over the origin-private file system (`tests/folder-browser.test.ts`); the native picker dialog itself is not automatable |
 | Mandatory snapshots, versioned schema, escaped Markdown, standalone build | Implemented; see acceptance limitations above |
 | Requested project milestones, milestone filter and a capacity-check milestone overview | Implemented extension; domain, calculation-module and offline interaction tests |
 | Per-milestone and per-sprint burnup charts (scope/done, derived from Activity history, sharing one engine) | Implemented extension; domain and offline interaction tests |
@@ -364,6 +378,7 @@ The installed Chromium test browser is a development tool and is not redistribut
 - `evidence/planning-red.txt`, `planning-ui-red.txt`, `planning-zero-red.txt`, `planning-scoping-red.txt`, `planning-docs-red.txt`: observed planning test failures before their implementations or corrections.
 - `evidence/planning-project.png`, `planning-card.png`: delivered-file captures; faithful visual review remains deferred.
 - `evidence/initial-red.txt`, `domain-red.txt`, `denial-red.txt`, `review-red.txt`, `review-ui-red.txt`, `autosave-red.txt`: observed failing baselines and regressions.
+- `evidence/folder-red.txt`: the folder-save tests failing before the implementation; `folder-connected.png`, `folder-welcome.png`, `folder-conflict.png`: connected status, the welcome screen after a site-data wipe, and the conflict dialog.
 - `evidence/01-offline-first-launch.png`: isolated offline first launch.
 - `evidence/02-board.png`, `03-restarted.png`: board before/after process restart.
 - `evidence/04-restored.png`, `workspace-backup.json`: fresh-profile recovery.

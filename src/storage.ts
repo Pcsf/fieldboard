@@ -81,6 +81,20 @@ export class Storage {
       tx.oncomplete = () => resolve(); tx.onabort = () => reject(tx.error ?? new Error("Snapshot failed")); tx.onerror = () => reject(tx.error);
     });
   }
+  // Small device-bound records (a folder handle) kept beside the workspace record under their own keys.
+  async meta(key: string): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      const tx = this.transaction("workspace"); const request = tx.objectStore("workspace").get(key);
+      tx.oncomplete = () => resolve(request.result ?? null); tx.onabort = () => reject(tx.error ?? new Error("Read aborted")); tx.onerror = () => reject(tx.error);
+    });
+  }
+  async putMeta(key: string, value: unknown): Promise<void> {
+    if (key === "current") throw new Error("The workspace record is written through commit only.");
+    return new Promise((resolve, reject) => {
+      const tx = this.transaction("workspace", true); if (value === null) tx.objectStore("workspace").delete(key); else tx.objectStore("workspace").put(value, key);
+      tx.oncomplete = () => resolve(); tx.onabort = () => reject(tx.error ?? new Error("Write aborted")); tx.onerror = () => reject(tx.error);
+    });
+  }
   async snapshots(): Promise<Snapshot[]> {
     return new Promise((resolve, reject) => {
       const tx = this.transaction("snapshots"); const request = tx.objectStore("snapshots").getAll();

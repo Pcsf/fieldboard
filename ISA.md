@@ -1,6 +1,6 @@
 ---
 phase: complete
-progress: 54/55
+progress: 60/62
 principal_stated_goal: "do all in sequency. it is your call in which order. I will not be around for the next 8h, therefore, you can decide the next steps. implement all features and release it. try to finishe the full project today."
 ---
 
@@ -115,6 +115,26 @@ Learned: the first auto-archive design rewrote `completedAt` on restore, which w
 Open: R54 is closed on this machine only. A mid-range laptop has not been measured, so the spec's laptop wording stays unproven. Count: 54 of 55 verified, R54 partly.
 
 Anti-claims: no feature makes a network request; no automation runs while the file is closed or claims to; no card render scans all cards or all activities; no history is rewritten (automation and imports append); no colour outside theme tokens; no claim closes on a test written after its code without saying so.
+
+## Release 5: save to a folder, and a readable interface
+
+Stated goal (2026-10-23): *"please improve the UI overall design. It currently doesn't look aesthetic pleasant and functional! Also make the auto-saving feature save the .json file in a user specified folder by default instead of the actual solution which saves somewhere. My work laptop simply don't keep it once the browser is closed loosing all data if I don't perform an export and later import!"* Then, mid-work: *"I am not sure whether the IT policy would allow file system access API!"*
+
+Vision: the workspace lives in a file the principal owns, in a folder he chose, in the same JSON the backup already uses, so a browser that forgets everything on close costs one folder pick per session and nothing else. Where the folder picker is unavailable or blocked, an ordinary download does the same job on a throttle. The interface reads at normal text sizes with one visual language (type scale, toolbar, cards, dialogs) instead of marketing copy and 9 px captions.
+
+| ID | Claim | Falsifier / probe | Status |
+|---|---|---|---|
+| R56 | Every acknowledged change is mirrored to `fieldboard.json` in the chosen folder; rapid edits coalesce into one write; an unchanged state is never rewritten | in-memory handle: three edits, two file writes (main + dated copy); same state again, no write | Verified: `tests/file-mirror.test.ts` (red first: `evidence/folder-red.txt`) |
+| R57 | One dated copy per local day, the newest seven kept, and no other file in the folder is ever removed | in-memory handle: ten days of writes beside foreign files | Verified: `tests/file-mirror.test.ts` |
+| R58 | Reconnect without a click when the stored handle is still granted; a handle that needs permission is surfaced (banner, Reconnect) and never written to; a write failure is reported while the browser copy stays saved, and retry resumes | unit: permission "prompt" doubles, failing writable; browser: reload keeps mirroring | Verified: `tests/file-mirror.test.ts`, `tests/folder-browser.test.ts` |
+| R59 | After the browser wipes site data, picking the same folder restores the workspace from the file with no confirmation (the browser side is pristine); when both sides hold differing work the app asks, naming the newer side; keeping the browser's version first writes a dated conflict copy; an invalid file is refused and never overwritten | real `FileSystemDirectoryHandle` (origin-private file system on localhost), IndexedDB + localStorage deleted between sessions; unit reconcile table | Verified: `tests/folder-browser.test.ts` (wipe, reconnect, conflict dialog, disconnect), `tests/file-mirror.test.ts` (reconcile); the native picker dialog itself is stubbed, since no test can drive it |
+| R60 | Auto-backup downloads: off by default; when on (stored in the workspace, so it survives its own round trip), the first change downloads at once, later changes at most once per interval (15 minutes shipped) with the latest state only, a hidden tab flushes immediately, and an unchanged state downloads nothing | fake clock and download sink | Verified: `tests/auto-backup.test.ts` |
+| R61 | A blocked or missing folder picker is reported as such and the download fallback is offered; Brave without its flag and Firefox take that path | code path by error class; manual: Brave default profile | Verified by construction (`blockedByPolicy` in `src/storage-ui.ts`); the policy-blocked Chrome/Edge case is not reproduced on this machine |
+| R62 | The redesign keeps every prior guarantee: both theme token tables clear WCAG AA for every text pair, axe finds no serious issue on any surface, phone and medium widths do not overflow, keyboard walk and screenshots pass, and no test selector or label changed | full suite | See `evidence/release5-tests.txt` |
+
+Design: the folder handle is kept beside the workspace record in the existing `workspace` object store (key `folder`), so the database version and every test's `indexedDB.open("fieldboard", 2)` stay as they are. The file content is exactly the backup JSON, with no envelope, so the dated copies, the conflict copy and the main file all restore through the existing path. Writes go through `createWritable()`, which Chromium commits atomically on close, so a crash mid-write leaves the previous file intact.
+
+Anti-claims: no claim that the folder survives a browser whose policy also blocks downloads; no claim about Safari or Firefox beyond the download fallback; the native folder picker was not driven by any test, only stubbed with a real handle; no network request was added.
 
 ## Effort estimation integration
 

@@ -21,8 +21,11 @@ async function launch(userProfile=profile) {
   await c.setOffline(true);
   await c.route(/^https?:/,r=>{requests.push(r.request().url());return r.abort()});
   c.on("page",p=>p.on("pageerror",e=>errors.push(e.message)));
+  // Brave restores the previous session's tabs on a same-profile relaunch; a restored app tab would hold the editor lock.
+  for (const extra of c.pages().slice(1)) await extra.close();
   const p=c.pages()[0]??await c.newPage(); p.on("pageerror",e=>errors.push(e.message));
   await p.goto(url); await p.getByTestId("storage-status").filter({hasText:"Saved"}).waitFor();
+  expect(await p.getByTestId("storage-status").textContent()).not.toContain("Not saved");
   return {c,p};
 }
 async function saved(p=page) { await p.getByTestId("storage-status").filter({hasText:"Saved"}).waitFor(); }
@@ -103,7 +106,7 @@ test("backup: downloaded workspace restores losslessly into a fresh offline prof
   await open("Drag B");await page.getByLabel("Description",{exact:true}).fill("Backup fixture with **metadata**");await page.getByLabel("Label names",{exact:true}).fill("Release");await page.getByLabel("Label names",{exact:true}).press("Tab");await page.getByLabel("Assign to Me",{exact:true}).check();await page.getByPlaceholder("Add subtask").fill("Roundtrip checklist");await page.getByPlaceholder("Add subtask").press("Enter");await saved();await page.getByPlaceholder("Write a comment").fill("Roundtrip comment");await page.getByRole("button",{name:"Add comment",exact:true}).click();await saved();await closeDetail();
   const before=await state();const download=page.waitForEvent("download");await page.getByRole("button",{name:"Download backup",exact:true}).click();const backup=await download;await backup.saveAs("evidence/workspace-backup.json");
   const fresh=await mkdtemp(join(temporaryRoot,"restore-"));const {c,p}=await launch(fresh);
-  try { p.once("dialog",d=>d.accept());await p.getByLabel("Restore JSON backup").setInputFiles("evidence/workspace-backup.json");await saved(p);
+  try { await p.getByLabel("Restore JSON backup").setInputFiles("evidence/workspace-backup.json");await saved(p);
     const restored=await state(p);expect({...restored,revision:before.revision}).toEqual(before);
     await p.reload();await saved(p);expect({...await state(p),revision:before.revision}).toEqual(before);
     await p.screenshot({path:"evidence/04-restored.png",fullPage:true});
@@ -207,7 +210,7 @@ test("daily snapshots catch up, retain seven days and restore through the delive
   const fresh=await mkdtemp(join(temporaryRoot,"snapshots-"));const {c,p}=await launch(fresh);
   const snapshots=()=>p.evaluate(async()=>new Promise<any[]>((resolve,reject)=>{const r=indexedDB.open("fieldboard",2);r.onsuccess=()=>{const db=r.result;const tx=db.transaction("snapshots");const g=tx.objectStore("snapshots").getAll();g.onsuccess=()=>resolve(g.result);tx.oncomplete=()=>db.close();tx.onabort=()=>reject(tx.error)}}));
   try {
-    const imported=await state();p.once("dialog",d=>d.accept());await p.getByLabel("Restore JSON backup").setInputFiles({name:"snapshot-fixture.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(imported))});await p.getByRole("button",{name:`Open card: ${imported.cards[0].title}`,exact:true}).waitFor();await saved(p);
+    const imported=await state();await p.getByLabel("Restore JSON backup").setInputFiles({name:"snapshot-fixture.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(imported))});await p.getByRole("button",{name:`Open card: ${imported.cards[0].title}`,exact:true}).waitFor();await saved(p);
     const start=Date.parse("2030-01-01T12:00:00Z");await p.clock.install({time:start});await p.reload();await saved(p);
     for(let day=1;day<=8;day++){await p.clock.setSystemTime(start+day*86400000);await p.clock.fastForward(61000);await snapshots()}
     const kept=await snapshots();expect(kept).toHaveLength(7);expect(kept[0].date).toBe("2030-01-03");

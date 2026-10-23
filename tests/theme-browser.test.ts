@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
 
-const LIGHT_BG = "rgb(251, 252, 250)";
+const LIGHT_BG = "rgb(246, 247, 244)";
 const DARK_BG = "rgb(18, 22, 27)";
 const saved = async (p: Page) => { await p.getByTestId("storage-status").filter({ hasText: "Saved" }).waitFor(); };
 const bg = (p: Page) => p.evaluate(() => getComputedStyle(document.body).backgroundColor);

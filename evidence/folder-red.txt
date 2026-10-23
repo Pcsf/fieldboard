@@ -1,0 +1,9 @@
+ 0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [5.00ms]
+43 |   context.on("page", p => p.on("pageerror", e => errors.push(e.message)));
+44 |   let page = context.pages()[0]!; page.on("pageerror", e => errors.push(e.message));
+(fail) folder save: the chosen folder receives every acknowledged change, survives a site-data wipe, reconnects after reload and resolves a conflict by asking [8656.29ms]
+ 0 pass
+ 1 fail

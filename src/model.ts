@@ -46,7 +46,7 @@ export const themes = ["system", "light", "dark"] as const;
 export type Theme = typeof themes[number];
 export interface Workspace {
   schemaVersion: number; revision: number; id: string; name: string;
-  members: Member[]; settings: { actorId: string; theme?: Theme; estimateUnit?: EstimateUnit };
+  members: Member[]; settings: { actorId: string; theme?: Theme; estimateUnit?: EstimateUnit; autoBackup?: boolean };
   projects: Project[]; boards: Board[]; columns: Column[]; cards: Card[]; activities: Activity[];
   catalog?: Category[]; cardTemplates?: CardTemplate[]; boardTemplates?: BoardTemplate[]; notifications?: Notification[];
 }
@@ -471,6 +471,7 @@ export function validateWorkspace(input: unknown, clone = true): Workspace {
   const actor = obj(w.settings).actorId; if (!members.some(m => m.id === actor)) fail("unknown actor");
   const theme = obj(w.settings).theme; if (theme !== undefined && !themes.includes(theme as Theme)) fail("invalid theme");
   const estimateUnit = obj(w.settings).estimateUnit; if (estimateUnit !== undefined && !estimateUnits.includes(estimateUnit as EstimateUnit)) fail("invalid estimate unit");
+  const autoBackup = obj(w.settings).autoBackup; if (autoBackup !== undefined && typeof autoBackup !== "boolean") fail("invalid auto-backup setting");
   if (w.notifications !== undefined) validateNotifications(w.notifications, members.map(m => m.id as string));
   if (w.catalog !== undefined) validateCatalog(w.catalog);
   const catalog: Category[] = (w.catalog as Category[] | undefined) ?? defaultCatalog;

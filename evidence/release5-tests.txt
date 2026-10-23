@@ -1,0 +1,10 @@
+Full suite on the final tree, 2026-10-23, CHROMIUM_PATH=/usr/bin/brave (Brave 155), Bun 1.4.0
+
+(fail) build delivers one self-contained HTML file [0.55ms]
+ 475 pass
+ 1 fail
+Ran 476 tests across 81 files. [183.94s]
+
+The one failure is tests/artifact.test.ts: dist/ held a second file, fieldboard-2026-10-23-1717.json, an auto-backup download saved by the principal while trying the feature in the preview; the HTML itself passed every other assertion.
+
+tests/browser.test.ts alone, twice, after the launch helper learned to close Brave's restored tabs: 16 pass / 0 fail both times.

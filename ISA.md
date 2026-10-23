@@ -1,6 +1,6 @@
 ---
 phase: complete
-progress: 60/62
+progress: 62/63
 principal_stated_goal: "do all in sequency. it is your call in which order. I will not be around for the next 8h, therefore, you can decide the next steps. implement all features and release it. try to finishe the full project today."
 ---
 
@@ -130,7 +130,8 @@ Vision: the workspace lives in a file the principal owns, in a folder he chose, 
 | R59 | After the browser wipes site data, picking the same folder restores the workspace from the file with no confirmation (the browser side is pristine); when both sides hold differing work the app asks, naming the newer side; keeping the browser's version first writes a dated conflict copy; an invalid file is refused and never overwritten | real `FileSystemDirectoryHandle` (origin-private file system on localhost), IndexedDB + localStorage deleted between sessions; unit reconcile table | Verified: `tests/folder-browser.test.ts` (wipe, reconnect, conflict dialog, disconnect), `tests/file-mirror.test.ts` (reconcile); the native picker dialog itself is stubbed, since no test can drive it |
 | R60 | Auto-backup downloads: off by default; when on (stored in the workspace, so it survives its own round trip), the first change downloads at once, later changes at most once per interval (15 minutes shipped) with the latest state only, a hidden tab flushes immediately, and an unchanged state downloads nothing | fake clock and download sink | Verified: `tests/auto-backup.test.ts` |
 | R61 | A blocked or missing folder picker is reported as such and the download fallback is offered; Brave without its flag and Firefox take that path | code path by error class; manual: Brave default profile | Verified by construction (`blockedByPolicy` in `src/storage-ui.ts`); the policy-blocked Chrome/Edge case is not reproduced on this machine |
-| R62 | The redesign keeps every prior guarantee: both theme token tables clear WCAG AA for every text pair, axe finds no serious issue on any surface, phone and medium widths do not overflow, keyboard walk and screenshots pass, and no test selector or label changed | full suite | See `evidence/release5-tests.txt` |
+| R62 | The redesign keeps every prior guarantee: both theme token tables clear WCAG AA for every text pair, axe finds no serious issue on any surface, phone and medium widths do not overflow, keyboard walk and screenshots pass, and no test selector or label changed | full suite | Verified: `evidence/release5-tests.txt` (475/476 on the release tree; the one failure was a stray trial download in `dist/`, removed before the commit) |
+| R63 | The release ships: version bumped, tagged `v0.4.0`, published with `fieldboard.html`, `README.md` and `SHA256SUMS` | `gh release view v0.4.0`, checksum on download | Verified: release commit on `main`, `v0.4.0` published |
 
 Design: the folder handle is kept beside the workspace record in the existing `workspace` object store (key `folder`), so the database version and every test's `indexedDB.open("fieldboard", 2)` stay as they are. The file content is exactly the backup JSON, with no envelope, so the dated copies, the conflict copy and the main file all restore through the existing path. Writes go through `createWritable()`, which Chromium commits atomically on close, so a crash mid-write leaves the previous file intact.
 
